@@ -1,0 +1,23 @@
+# fly.toml app configuration file for Stride Express server
+
+app = "stride-backend"
+primary_region = "ams"
+
+[build]
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+[mounts]
+  source = "stride_data"
+  destination = "/data"
+
+[env]
+  PORT = "8080"
+  DATABASE_URL = "file:/data/stride.db"
+  NODE_ENV = "production"

@@ -1,0 +1,277 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(uuid())
+  name          String
+  email         String   @unique
+  passwordHash  String   @map("password_hash")
+  avatarUrl     String?  @map("avatar_url")
+  emailVerified Boolean  @default(false) @map("email_verified")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  workspaceMembers WorkspaceMember[]
+  canvasMembers    CanvasMember[]
+  cardAssignees    CardAssignee[]
+  comments         Comment[]
+  events           Event[]
+  invitesSent      Invite[]       @relation("InviteSender")
+  notifications    Notification[]
+  bookmarks        Bookmark[]
+
+  @@map("users")
+}
+
+model Workspace {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  logoUrl     String?  @map("logo_url")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  members  WorkspaceMember[]
+  canvases Canvas[]
+  invites  Invite[]
+  events   Event[]
+
+  @@map("workspaces")
+}
+
+model WorkspaceMember {
+  id          String   @id @default(uuid())
+  workspaceId String   @map("workspace_id")
+  userId      String   @map("user_id")
+  role        String   @default("member") // admin, manager, member
+  joinedAt    DateTime @default(now()) @map("joined_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+  @@map("workspace_members")
+}
+
+model Canvas {
+  id          String   @id @default(uuid())
+  workspaceId String   @map("workspace_id")
+  name        String
+  description String?
+  icon        String?  @default("📋")
+  visibility  String   @default("public")
+  defaultView String   @default("board") @map("default_view")
+  archived    Boolean  @default(false)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  workspace Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  columns   CanvasColumn[]
+  members   CanvasMember[]
+  cards     Card[]
+  events    Event[]
+
+  @@map("canvases")
+}
+
+model CanvasMember {
+  id       String   @id @default(uuid())
+  canvasId String   @map("canvas_id")
+  userId   String   @map("user_id")
+  role     String   @default("member") // admin, editor, viewer
+  joinedAt DateTime @default(now()) @map("joined_at")
+
+  canvas Canvas @relation(fields: [canvasId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([canvasId, userId])
+  @@map("canvas_members")
+}
+
+model CanvasColumn {
+  id       String @id @default(uuid())
+  canvasId String @map("canvas_id")
+  name     String
+  position Int    @default(0)
+  color    String @default("#6B7280")
+  wipLimit Int?   @map("wip_limit")
+
+  canvas Canvas @relation(fields: [canvasId], references: [id], onDelete: Cascade)
+  cards  Card[]
+
+  @@map("canvas_columns")
+}
+
+model Card {
+  id          String    @id @default(uuid())
+  canvasId    String    @map("canvas_id")
+  columnId    String    @map("column_id")
+  title       String
+  description String?
+  type        String    @default("task") // task, bug, feature, story
+  priority    String    @default("medium") // low, medium, high, urgent
+  position    Int       @default(0)
+  dueDate     DateTime? @map("due_date")
+  completed   Boolean   @default(false)
+  completedAt DateTime? @map("completed_at")
+  archived    Boolean   @default(false)
+  archivedAt  DateTime? @map("archived_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  canvas    Canvas         @relation(fields: [canvasId], references: [id], onDelete: Cascade)
+  column    CanvasColumn   @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  assignees CardAssignee[]
+  labels    CardLabel[]
+  subTasks  SubTask[]
+  comments  Comment[]
+  attachments Attachment[]
+  events    Event[]
+
+  @@map("cards")
+}
+
+model CardAssignee {
+  id         String   @id @default(uuid())
+  cardId     String   @map("card_id")
+  userId     String   @map("user_id")
+  assignedAt DateTime @default(now()) @map("assigned_at")
+
+  card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([cardId, userId])
+  @@map("card_assignees")
+}
+
+model CardLabel {
+  id    String @id @default(uuid())
+  cardId String @map("card_id")
+  name  String
+  color String @default("#3B82F6")
+
+  card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@map("card_labels")
+}
+
+model SubTask {
+  id        String   @id @default(uuid())
+  cardId    String   @map("card_id")
+  title     String
+  completed Boolean  @default(false)
+  position  Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@map("sub_tasks")
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  cardId    String   @map("card_id")
+  userId    String   @map("user_id")
+  parentId  String?  @map("parent_id")
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  card    Card      @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent  Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies Comment[] @relation("CommentReplies")
+
+  @@map("comments")
+}
+
+model Attachment {
+  id        String   @id @default(uuid())
+  cardId    String   @map("card_id")
+  fileName  String   @map("file_name")
+  fileUrl   String   @map("file_url")
+  fileSize  Int      @map("file_size")
+  mimeType  String   @map("mime_type")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@map("attachments")
+}
+
+model Event {
+  id          String   @id @default(uuid())
+  type        String   // e.g. card.created, comment.added
+  workspaceId String?  @map("workspace_id")
+  canvasId    String?  @map("canvas_id")
+  cardId      String?  @map("card_id")
+  actorId     String   @map("actor_id")
+  metadata    String?  // JSON string for additional data
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  canvas    Canvas?    @relation(fields: [canvasId], references: [id], onDelete: Cascade)
+  card      Card?      @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  actor     User       @relation(fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([canvasId])
+  @@index([cardId])
+  @@index([actorId])
+  @@map("events")
+}
+
+model Invite {
+  id          String   @id @default(uuid())
+  workspaceId String   @map("workspace_id")
+  email       String
+  role        String   @default("member")
+  token       String   @unique
+  senderId    String   @map("sender_id")
+  accepted    Boolean  @default(false)
+  expiresAt   DateTime @map("expires_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  sender    User      @relation("InviteSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@map("invites")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  type      String
+  title     String
+  message   String
+  metadata  String?  // JSON string
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("notifications")
+}
+
+model Bookmark {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  cardId    String   @map("card_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, cardId])
+  @@map("bookmarks")
+}
