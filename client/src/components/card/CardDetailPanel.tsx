@@ -361,7 +361,7 @@ export function CardDetailPanel({ cardId, canvasId, onClose, preAssignedMemberId
                     {/* Creator metadata (only for existing cards) */}
                     {!isNew && card.creator && (
                       <div className="flex items-center gap-[10px] pt-[12px] border-t border-hairline">
-                        <Avatar src={card.creator.avatar_url || card.creator.avatarUrl} name={card.creator.name} size="sm" />
+                        <Avatar src={card.creator.avatarUrl} name={card.creator.name} size="sm" />
                         <div>
                           <p className="text-[12px] text-ink-muted">
                             Created by <span className="text-ink font-medium">{card.creator.name}</span>
@@ -420,7 +420,7 @@ export function CardDetailPanel({ cardId, canvasId, onClose, preAssignedMemberId
                             if (item.itemType === 'comment') {
                               return (
                                 <div key={item.id} className="flex items-start gap-[12px] group py-[4px]">
-                                  <Avatar src={item.user?.avatarUrl || item.user?.avatar_url} name={item.user?.name} size="sm" className="mt-[2px]" />
+                                  <Avatar src={item.user?.avatarUrl} name={item.user?.name} size="sm" className="mt-[2px]" />
                                   <div className="flex-1 min-w-0 bg-white/[0.01] hover:bg-white/[0.02] border border-hairline/40 rounded-lg p-[10px] transition-colors">
                                     <div className="flex items-center justify-between mb-[4px]">
                                       <span className="text-[12px] font-semibold text-ink">{item.user?.name}</span>

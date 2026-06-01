@@ -62,7 +62,7 @@ export function AssigneePicker({ value, canvasId, cardId, onChange }: AssigneePi
             key={user.id}
             className="flex items-center gap-[6px] px-[6px] py-[3px] rounded-md bg-white/[0.05] group"
           >
-            <Avatar src={user.avatar_url} name={user.name} size="xs" />
+            <Avatar src={user.avatarUrl} name={user.name} size="xs" />
             <span className="text-[12px] text-ink">{user.name}</span>
             <button
               onClick={() => toggleAssignee(user)}
@@ -102,7 +102,7 @@ export function AssigneePicker({ value, canvasId, cardId, onChange }: AssigneePi
                   isAssigned(user.id) ? 'text-accent bg-accent/5' : 'text-ink-muted hover:text-ink hover:bg-white/[0.05]'
                 )}
               >
-                <Avatar src={user.avatar_url} name={user.name} size="xs" />
+                <Avatar src={user.avatarUrl} name={user.name} size="xs" />
                 <span className="truncate">{user.name}</span>
                 {isAssigned(user.id) && (
                   <span className="ml-auto text-accent text-[10px]">✓</span>

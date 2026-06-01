@@ -109,7 +109,7 @@ export function ActivityItem({ event, onCardClick }: ActivityItemProps) {
       )}
     >
       <Avatar
-        src={event.user?.avatar_url}
+        src={event.user?.avatarUrl}
         name={event.user?.name || 'User'}
         size="sm"
       />
