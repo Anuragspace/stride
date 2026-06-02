@@ -70,6 +70,8 @@ export default function SignupPage() {
           size: 'large',
           width: 356,
           text: 'signup_with',
+          logo_alignment: 'center',
+          shape: 'rectangular',
         });
       }
     };
@@ -224,9 +226,8 @@ export default function SignupPage() {
         <p className="text-[13px] text-ink-muted mt-[4px]">Get started with Stride</p>
       </div>
 
-      {/* Google Sign-In at the top */}
       <div className="w-full flex justify-center">
-        <div id="google-signup-btn" className="w-full flex justify-center max-w-[356px] h-[40px] rounded-lg overflow-hidden" />
+        <div id="google-signup-btn" className="w-full flex justify-center max-w-[356px]" />
       </div>
 
       <div className="flex items-center gap-[10px]">

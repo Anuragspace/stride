@@ -65,7 +65,14 @@ export default function LoginPage() {
         });
         google.accounts.id.renderButton(
           document.getElementById('google-signin-btn'),
-          { theme: 'filled_black', size: 'large', width: 384, text: 'continue_with' }
+          { 
+            theme: 'filled_black', 
+            size: 'large', 
+            width: 384, 
+            text: 'continue_with',
+            logo_alignment: 'center',
+            shape: 'rectangular'
+          }
         );
       }
     };
@@ -220,7 +227,7 @@ export default function LoginPage() {
       </div>
 
       <div className="w-full flex justify-center">
-        <div id="google-signin-btn" className="w-full flex justify-center max-w-[384px] h-[40px] rounded-lg overflow-hidden" />
+        <div id="google-signin-btn" className="w-full flex justify-center max-w-[384px]" />
       </div>
 
       <div className="flex items-center gap-[10px] my-[16px]">
