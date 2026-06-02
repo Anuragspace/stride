@@ -15,8 +15,8 @@ interface AuthContextValue extends AuthState {
   logout: () => Promise<void>;
   setWorkspace: (workspace: Workspace) => void;
   updateUser: (user: User) => void;
-  googleLogin: (credential: string) => Promise<{ isNewUser: boolean; email?: string; name?: string; avatarUrl?: string }>;
-  googleRegister: (credential: string, name: string, avatarUrl: string) => Promise<void>;
+  googleLogin: (credential: string, inviteToken?: string) => Promise<{ isNewUser: boolean; email?: string; name?: string; avatarUrl?: string }>;
+  googleRegister: (credential: string, name: string, avatarUrl: string, inviteToken?: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -122,8 +122,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setState((prev) => ({ ...prev, user }));
   }, []);
 
-  const googleLogin = useCallback(async (credential: string) => {
-    const response = await api.post('/auth/google', { credential });
+  const googleLogin = useCallback(async (credential: string, inviteToken?: string) => {
+    const response = await api.post('/auth/google', { credential, inviteToken });
     const { isNewUser } = response.data.data;
 
     if (!isNewUser) {
@@ -153,14 +153,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return response.data.data;
   }, []);
 
-  const googleRegister = useCallback(async (credential: string, name: string, avatarUrl: string): Promise<void> => {
-    const response = await api.post('/auth/google/register', { credential, name, avatarUrl });
+  const googleRegister = useCallback(async (credential: string, name: string, avatarUrl: string, inviteToken?: string): Promise<void> => {
+    const response = await api.post('/auth/google/register', { credential, name, avatarUrl, inviteToken });
     const { user, accessToken } = response.data.data;
     setAccessToken(accessToken);
 
+    let workspace: Workspace | null = null;
+    try {
+      const wsResponse = await api.get('/workspaces');
+      const workspaces = wsResponse.data.data?.workspaces;
+      if (workspaces && workspaces.length > 0) {
+        workspace = workspaces[0];
+      }
+    } catch {
+      // No workspaces yet
+    }
+
     setState({
       user,
-      workspace: null,
+      workspace,
       isAuthenticated: true,
       isLoading: false,
     });

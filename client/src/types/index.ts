@@ -20,6 +20,7 @@ export interface Workspace {
 }
 
 export interface WorkspaceMember {
+  id?: string;
   workspaceId: string;
   userId: string;
   role: 'admin' | 'manager' | 'member';

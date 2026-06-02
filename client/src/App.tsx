@@ -14,6 +14,7 @@ const CanvasPage = lazy(() => import('@/pages/canvas/CanvasPage'));
 const ActivityPage = lazy(() => import('@/pages/ActivityPage'));
 const WorkspaceSettingsPage = lazy(() => import('@/pages/settings/WorkspaceSettingsPage'));
 const ProfileSettingsPage = lazy(() => import('@/pages/settings/ProfileSettingsPage'));
+const InvitePage = lazy(() => import('@/pages/auth/InvitePage'));
 
 function PageLoader() {
   return (
@@ -88,6 +89,9 @@ export default function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
           </Route>
+
+          {/* Invite landing page */}
+          <Route path="/invite/:token" element={<InvitePage />} />
 
           {/* Create workspace (authenticated but no workspace) */}
           <Route

@@ -6,6 +6,7 @@ import prisma from '../lib/prisma';
 import { generateTokenPair, verifyRefreshToken } from '../lib/jwt';
 import { BadRequestError, ConflictError, NotFoundError, UnauthorizedError } from '../lib/errors';
 import { authenticate } from '../middleware/auth';
+import { fireEvent } from '../lib/events';
 
 const router = Router();
 
@@ -189,7 +190,7 @@ router.post('/refresh', async (req: Request, res: Response, next: NextFunction) 
 
 router.post('/google', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { credential } = req.body;
+    const { credential, inviteToken } = req.body;
 
     if (!credential) {
       throw new BadRequestError('Google credential is required');
@@ -231,6 +232,55 @@ router.post('/google', async (req: Request, res: Response, next: NextFunction) =
     });
 
     if (user) {
+      // If there is an inviteToken, process the workspace join first
+      if (inviteToken) {
+        const invite = await prisma.invite.findUnique({
+          where: { token: inviteToken },
+        });
+
+        if (!invite) {
+          throw new NotFoundError('Invite');
+        }
+        if (invite.accepted) {
+          throw new BadRequestError('This invite has already been accepted');
+        }
+        if (new Date() > invite.expiresAt) {
+          throw new BadRequestError('This invite has expired');
+        }
+        if (invite.email !== email) {
+          throw new BadRequestError('Your Google email does not match the invited email');
+        }
+
+        // Add user to workspace
+        await prisma.workspaceMember.upsert({
+          where: {
+            workspaceId_userId: {
+              workspaceId: invite.workspaceId,
+              userId: user.id,
+            },
+          },
+          create: {
+            workspaceId: invite.workspaceId,
+            userId: user.id,
+            role: invite.role,
+          },
+          update: {},
+        });
+
+        // Mark invite as accepted
+        await prisma.invite.update({
+          where: { id: invite.id },
+          data: { accepted: true },
+        });
+
+        await fireEvent({
+          type: 'member.joined',
+          actorId: user.id,
+          workspaceId: invite.workspaceId,
+          metadata: { memberId: user.id, memberName: user.name },
+        });
+      }
+
       // User exists, log them in!
       const tokens = generateTokenPair({ userId: user.id, email: user.email });
 
@@ -273,7 +323,7 @@ router.post('/google', async (req: Request, res: Response, next: NextFunction) =
 
 router.post('/google/register', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { credential, name, avatarUrl } = req.body;
+    const { credential, name, avatarUrl, inviteToken } = req.body;
 
     if (!credential || !name) {
       throw new BadRequestError('Credential and name are required');
@@ -318,6 +368,55 @@ router.post('/google/register', async (req: Request, res: Response, next: NextFu
         emailVerified: true,
       },
     });
+
+    // If there is an inviteToken, process the workspace join
+    if (inviteToken) {
+      const invite = await prisma.invite.findUnique({
+        where: { token: inviteToken },
+      });
+
+      if (!invite) {
+        throw new NotFoundError('Invite');
+      }
+      if (invite.accepted) {
+        throw new BadRequestError('This invite has already been accepted');
+      }
+      if (new Date() > invite.expiresAt) {
+        throw new BadRequestError('This invite has expired');
+      }
+      if (invite.email !== email) {
+        throw new BadRequestError('Your Google email does not match the invited email');
+      }
+
+      // Add user to workspace
+      await prisma.workspaceMember.upsert({
+        where: {
+          workspaceId_userId: {
+            workspaceId: invite.workspaceId,
+            userId: user.id,
+          },
+        },
+        create: {
+          workspaceId: invite.workspaceId,
+          userId: user.id,
+          role: invite.role,
+        },
+        update: {},
+      });
+
+      // Mark invite as accepted
+      await prisma.invite.update({
+        where: { id: invite.id },
+        data: { accepted: true },
+      });
+
+      await fireEvent({
+        type: 'member.joined',
+        actorId: user.id,
+        workspaceId: invite.workspaceId,
+        metadata: { memberId: user.id, memberName: user.name },
+      });
+    }
 
     const tokens = generateTokenPair({ userId: user.id, email: user.email });
 
@@ -364,6 +463,50 @@ router.post('/verify-email', authenticate, async (req: Request, res: Response, n
 
     res.json({
       data: { user },
+      error: null,
+      meta: null,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ─── GET /api/auth/invite-verify/:token ──────────────────────────────────────
+router.get('/invite-verify/:token', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { token } = req.params;
+
+    if (!token) {
+      throw new BadRequestError('Invite token is required');
+    }
+
+    const invite = await prisma.invite.findUnique({
+      where: { token },
+      include: {
+        workspace: { select: { name: true } },
+        sender: { select: { name: true } },
+      },
+    });
+
+    if (!invite) {
+      throw new NotFoundError('Invite');
+    }
+
+    if (invite.accepted) {
+      throw new BadRequestError('This invite has already been accepted');
+    }
+
+    if (new Date() > invite.expiresAt) {
+      throw new BadRequestError('This invite has expired');
+    }
+
+    res.json({
+      data: {
+        email: invite.email,
+        role: invite.role,
+        workspaceName: invite.workspace.name,
+        senderName: invite.sender.name,
+      },
       error: null,
       meta: null,
     });

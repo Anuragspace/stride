@@ -5,6 +5,7 @@ import prisma from '../lib/prisma';
 import { authenticate, authorizeWorkspaceRole } from '../middleware/auth';
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from '../lib/errors';
 import { fireEvent, createNotification } from '../lib/events';
+import { sendWorkspaceInviteEmail } from '../lib/email';
 
 const router = Router();
 
@@ -434,6 +435,21 @@ router.post(
         });
       }
 
+      // Send invite email via Brevo / console fallback
+      const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+      const inviteLink = `${clientUrl}/invite/${invite.token}`;
+
+      try {
+        await sendWorkspaceInviteEmail({
+          email: invite.email,
+          workspaceName: invite.workspace.name,
+          senderName: invite.sender.name,
+          inviteLink,
+        });
+      } catch (err) {
+        console.error('Failed to send invite email:', err);
+      }
+
       res.status(201).json({
         data: { invite },
         error: null,
@@ -453,7 +469,10 @@ router.get(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const invites = await prisma.invite.findMany({
-        where: { workspaceId: req.params.workspaceId },
+        where: {
+          workspaceId: req.params.workspaceId,
+          accepted: false,
+        },
         include: {
           sender: { select: { id: true, name: true, email: true } },
         },
