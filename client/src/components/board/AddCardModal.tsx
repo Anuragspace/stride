@@ -47,8 +47,9 @@ export function AddCardModal({
       setTitle('');
       setType('task');
       onClose();
-    } catch {
-      error('Failed to create card', 'Please try again');
+    } catch (err: any) {
+      const errMsg = err?.response?.data?.error?.message || err?.message || 'Please try again';
+      error('Failed to create card', errMsg);
     }
   };
 

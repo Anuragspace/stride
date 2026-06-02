@@ -177,8 +177,9 @@ export function CardDetailPanel({ cardId, canvasId, onClose, preAssignedMemberId
       }
       success('Card created successfully');
       onClose();
-    } catch {
-      error('Failed to create card');
+    } catch (err: any) {
+      const errMsg = err?.response?.data?.error?.message || err?.message || 'Please try again';
+      error('Failed to create card', errMsg);
     }
   };
 
