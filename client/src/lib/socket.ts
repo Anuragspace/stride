@@ -35,9 +35,23 @@ export const disconnectSocket = () => {
 };
 
 export const joinRoom = (room: string) => {
-  socket?.emit('join', room);
+  if (!socket) return;
+  if (room.startsWith('canvas:')) {
+    socket.emit('join:canvas', room.replace('canvas:', ''));
+  } else if (room.startsWith('workspace:')) {
+    socket.emit('join:workspace', room.replace('workspace:', ''));
+  } else {
+    socket.emit('join', room);
+  }
 };
 
 export const leaveRoom = (room: string) => {
-  socket?.emit('leave', room);
+  if (!socket) return;
+  if (room.startsWith('canvas:')) {
+    socket.emit('leave:canvas', room.replace('canvas:', ''));
+  } else if (room.startsWith('workspace:')) {
+    socket.emit('leave:workspace', room.replace('workspace:', ''));
+  } else {
+    socket.emit('leave', room);
+  }
 };

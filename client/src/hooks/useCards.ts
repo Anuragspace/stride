@@ -180,9 +180,42 @@ export function useCards(canvasId: string) {
     onMutate: async (updates) => {
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData<Card[]>(queryKey);
+      
+      const mappedUpdates = { ...updates };
+      if (updates.assignees) {
+        mappedUpdates.assignees = (updates.assignees as any[]).map((u: any) => {
+          if (u.user) {
+            return {
+              cardId: u.cardId || updates.id,
+              userId: u.userId,
+              user: {
+                id: u.user.id,
+                name: u.user.name,
+                email: u.user.email,
+                avatarUrl: u.user.avatarUrl || u.user.avatar_url,
+                avatar_url: u.user.avatarUrl || u.user.avatar_url,
+              },
+              assignedAt: u.assignedAt || new Date().toISOString(),
+            };
+          }
+          return {
+            cardId: updates.id,
+            userId: u.id,
+            user: {
+              id: u.id,
+              name: u.name,
+              email: u.email,
+              avatarUrl: u.avatarUrl || u.avatar_url,
+              avatar_url: u.avatarUrl || u.avatar_url,
+            },
+            assignedAt: new Date().toISOString(),
+          };
+        }) as any;
+      }
+
       queryClient.setQueryData<Card[]>(queryKey, (old) =>
         old?.map((card) =>
-          card.id === updates.id ? { ...card, ...updates, updatedAt: new Date().toISOString() } : card
+          card.id === updates.id ? { ...card, ...mappedUpdates, updatedAt: new Date().toISOString() } : card
         )
       );
       return { previous };

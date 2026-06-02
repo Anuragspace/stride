@@ -741,8 +741,7 @@ router.delete('/:cardId', async (req: Request, res: Response, next: NextFunction
       actorId: req.user!.id,
       workspaceId: existing.canvas.workspaceId,
       canvasId: existing.canvasId,
-      cardId: existing.id,
-      metadata: { title: existing.title },
+      metadata: { cardId: existing.id, title: existing.title },
     });
 
     // Emit WebSocket update
