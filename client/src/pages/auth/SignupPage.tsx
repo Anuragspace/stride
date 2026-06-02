@@ -75,7 +75,18 @@ export default function SignupPage() {
     };
 
     const timer = setTimeout(initGoogleGSI, 300);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      const google = (window as any).google;
+      if (google && google.accounts) {
+        try {
+          google.accounts.id.cancel();
+        } catch (e) {
+          console.error('Error cancelling google login prompt:', e);
+        }
+      }
+      gsiInitialized.current = false;
+    };
   }, [isGoogleSignup]);
 
   const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {

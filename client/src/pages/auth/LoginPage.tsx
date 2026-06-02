@@ -72,7 +72,18 @@ export default function LoginPage() {
 
     // Delay slightly to ensure script is fully resolved in DOM
     const timer = setTimeout(initGoogleGSI, 500);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      const google = (window as any).google;
+      if (google && google.accounts) {
+        try {
+          google.accounts.id.cancel();
+        } catch (e) {
+          console.error('Error cancelling google login prompt:', e);
+        }
+      }
+      gsiInitializedRef.current = false;
+    };
   }, [isGoogleSignup]);
 
   const handleSubmit = async (e: React.FormEvent) => {
