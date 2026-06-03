@@ -111,7 +111,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
       },
     });
 
-    await fireEvent({
+    fireEvent({
       type: 'comment.added',
       actorId: userId,
       workspaceId: card.canvas.workspaceId,
@@ -127,7 +127,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
     // Notify card assignees (except the commenter)
     for (const assignee of card.assignees) {
       if (assignee.userId !== userId) {
-        await createNotification({
+        createNotification({
           userId: assignee.userId,
           type: 'comment.added',
           title: 'New comment on your card',
@@ -223,7 +223,7 @@ router.delete('/:commentId', async (req: Request, res: Response, next: NextFunct
       where: { id: req.params.commentId },
     });
 
-    await fireEvent({
+    fireEvent({
       type: 'comment.deleted',
       actorId: req.user!.id,
       workspaceId: existing.card.canvas.workspaceId,

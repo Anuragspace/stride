@@ -165,7 +165,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
       },
     });
 
-    await fireEvent({
+    fireEvent({
       type: 'canvas.created',
       actorId: userId,
       workspaceId: body.workspaceId,
@@ -276,7 +276,7 @@ router.post('/:canvasId/archive', async (req: Request, res: Response, next: Next
       data: { archived: true },
     });
 
-    await fireEvent({
+    fireEvent({
       type: 'canvas.archived',
       actorId: req.user!.id,
       workspaceId: canvas.workspaceId,
@@ -505,7 +505,7 @@ router.post('/:canvasId/members', async (req: Request, res: Response, next: Next
       },
     });
 
-    await fireEvent({
+    fireEvent({
       type: 'member.joined',
       actorId: req.user!.id,
       canvasId: req.params.canvasId,

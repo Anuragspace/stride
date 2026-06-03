@@ -1,8 +1,9 @@
+import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
-import type { Notification } from '@/types';
+import { useSocketContext } from '@/contexts/SocketContext';
+import { useAuth } from '@/contexts/AuthContext';
 
-// Map server Notification structure to UI expectation
 interface ClientNotification {
   id: string;
   userId: string;
@@ -13,27 +14,55 @@ interface ClientNotification {
   created_at: string;
 }
 
+const mapNotification = (n: any): ClientNotification => ({
+  id: n.id,
+  userId: n.userId,
+  type: n.type,
+  title: n.title,
+  body: n.message,
+  is_read: n.read,
+  created_at: n.createdAt,
+});
+
 export function useNotifications() {
   const queryClient = useQueryClient();
   const queryKey = ['notifications'];
+  const { socket, isConnected } = useSocketContext();
+  const { user } = useAuth();
 
+  // ─── Initial fetch ─────────────────────────────────────────────────────────
   const { data: notifications, isLoading } = useQuery({
     queryKey,
     queryFn: async (): Promise<ClientNotification[]> => {
       const { data } = await api.get('/notifications');
-      const rawNotifications = data.data?.notifications || [];
-      return rawNotifications.map((n: any) => ({
-        id: n.id,
-        userId: n.userId,
-        type: n.type,
-        title: n.title,
-        body: n.message,
-        is_read: n.read,
-        created_at: n.createdAt,
-      }));
+      const raw = data.data?.notifications || [];
+      return raw.map(mapNotification);
     },
-    refetchInterval: 30000, // Poll every 30s
+    staleTime: 1000 * 60, // 1 minute stale-while-revalidate
+    // NO refetchInterval — socket keeps this live
   });
+
+  // ─── Real-time: socket pushes new notifications instantly ─────────────────
+  useEffect(() => {
+    if (!socket || !isConnected || !user) return;
+
+    const handleNewNotification = (raw: any) => {
+      const notification = mapNotification(raw);
+      queryClient.setQueryData<ClientNotification[]>(queryKey, (old) => {
+        if (!old) return [notification];
+        // Prepend and deduplicate
+        const exists = old.some((n) => n.id === notification.id);
+        if (exists) return old;
+        return [notification, ...old];
+      });
+    };
+
+    socket.on('notification', handleNewNotification);
+
+    return () => {
+      socket.off('notification', handleNewNotification);
+    };
+  }, [socket, isConnected, user, queryClient]);
 
   const unreadCount = notifications?.filter((n) => !n.is_read).length || 0;
 
@@ -79,4 +108,3 @@ export function useNotifications() {
     markAllAsRead: markAllAsReadMutation.mutate,
   };
 }
-

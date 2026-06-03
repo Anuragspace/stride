@@ -245,7 +245,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
       select: { workspaceId: true },
     });
 
-    await fireEvent({
+    fireEvent({
       type: 'card.created',
       actorId: userId,
       workspaceId: canvas?.workspaceId,
@@ -258,7 +258,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
     if (body.assigneeIds) {
       for (const assigneeId of body.assigneeIds) {
         if (assigneeId !== userId) {
-          await createNotification({
+          createNotification({
             userId: assigneeId,
             type: 'card.assigned',
             title: 'Assigned to card',
@@ -420,7 +420,7 @@ router.patch('/:cardId', async (req: Request, res: Response, next: NextFunction)
 
     // Fire specific events based on what changed
     if (rest.priority && rest.priority !== existing.priority) {
-      await fireEvent({
+      fireEvent({
         type: 'card.priority_changed',
         actorId: userId,
         workspaceId: existing.canvas.workspaceId,
@@ -431,7 +431,7 @@ router.patch('/:cardId', async (req: Request, res: Response, next: NextFunction)
     }
 
     if (rest.dueDate !== undefined && String(rest.dueDate) !== String(existing.dueDate)) {
-      await fireEvent({
+      fireEvent({
         type: 'card.due_date_changed',
         actorId: userId,
         workspaceId: existing.canvas.workspaceId,
@@ -443,7 +443,7 @@ router.patch('/:cardId', async (req: Request, res: Response, next: NextFunction)
 
     // Database workload optimization: only log edits for title renames, skipping description events
     if (rest.title && rest.title !== existing.title) {
-      await fireEvent({
+      fireEvent({
         type: 'card.edited',
         actorId: userId,
         workspaceId: existing.canvas.workspaceId,
@@ -585,7 +585,7 @@ router.post('/:cardId/move', async (req: Request, res: Response, next: NextFunct
     });
 
     if (existing.columnId !== body.columnId) {
-      await fireEvent({
+      fireEvent({
         type: 'card.moved',
         actorId: userId,
         workspaceId: existing.canvas.workspaceId,
@@ -598,7 +598,7 @@ router.post('/:cardId/move', async (req: Request, res: Response, next: NextFunct
       });
 
       // Also fire status_changed
-      await fireEvent({
+      fireEvent({
         type: 'card.status_changed',
         actorId: userId,
         workspaceId: existing.canvas.workspaceId,
@@ -656,7 +656,7 @@ router.post('/:cardId/complete', async (req: Request, res: Response, next: NextF
       },
     });
 
-    await fireEvent({
+    fireEvent({
       type: 'card.completed',
       actorId: req.user!.id,
       workspaceId: existing.canvas.workspaceId,
@@ -674,7 +674,7 @@ router.post('/:cardId/complete', async (req: Request, res: Response, next: NextF
     if (card.assignees) {
       for (const assignee of card.assignees) {
         if (assignee.userId !== req.user!.id) {
-          await createNotification({
+          createNotification({
             userId: assignee.userId,
             type: 'card.completed',
             title: 'Card completed',
@@ -730,7 +730,7 @@ router.post('/:cardId/reopen', async (req: Request, res: Response, next: NextFun
       },
     });
 
-    await fireEvent({
+    fireEvent({
       type: 'card.reopened',
       actorId: req.user!.id,
       workspaceId: existing.canvas.workspaceId,
@@ -774,7 +774,7 @@ router.post('/:cardId/archive', async (req: Request, res: Response, next: NextFu
       },
     });
 
-    await fireEvent({
+    fireEvent({
       type: 'card.archived',
       actorId: req.user!.id,
       workspaceId: existing.canvas.workspaceId,
@@ -812,7 +812,7 @@ router.post('/:cardId/restore', async (req: Request, res: Response, next: NextFu
       },
     });
 
-    await fireEvent({
+    fireEvent({
       type: 'card.restored',
       actorId: req.user!.id,
       workspaceId: existing.canvas.workspaceId,
@@ -846,7 +846,7 @@ router.delete('/:cardId', async (req: Request, res: Response, next: NextFunction
       where: { id: req.params.cardId },
     });
 
-    await fireEvent({
+    fireEvent({
       type: 'card.deleted',
       actorId: req.user!.id,
       workspaceId: existing.canvas.workspaceId,
@@ -894,7 +894,7 @@ router.post('/:cardId/assignees', async (req: Request, res: Response, next: Next
       },
     });
 
-    await fireEvent({
+    fireEvent({
       type: 'card.assigned',
       actorId: req.user!.id,
       workspaceId: card.canvas.workspaceId,
@@ -904,7 +904,7 @@ router.post('/:cardId/assignees', async (req: Request, res: Response, next: Next
     });
 
     if (assigneeId !== req.user!.id) {
-      await createNotification({
+      createNotification({
         userId: assigneeId,
         type: 'card.assigned',
         title: 'Assigned to card',
@@ -942,7 +942,7 @@ router.delete('/:cardId/assignees/:userId', async (req: Request, res: Response, 
       },
     });
 
-    await fireEvent({
+    fireEvent({
       type: 'card.unassigned',
       actorId: req.user!.id,
       workspaceId: card.canvas.workspaceId,

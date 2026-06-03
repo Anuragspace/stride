@@ -273,7 +273,7 @@ router.post('/google', async (req: Request, res: Response, next: NextFunction) =
           data: { accepted: true },
         });
 
-        await fireEvent({
+        fireEvent({
           type: 'member.joined',
           actorId: user.id,
           workspaceId: invite.workspaceId,
@@ -410,7 +410,7 @@ router.post('/google/register', async (req: Request, res: Response, next: NextFu
         data: { accepted: true },
       });
 
-      await fireEvent({
+      fireEvent({
         type: 'member.joined',
         actorId: user.id,
         workspaceId: invite.workspaceId,

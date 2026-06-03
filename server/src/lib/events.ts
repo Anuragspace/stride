@@ -44,69 +44,82 @@ export function getSocketIO(): SocketIOServer | null {
 }
 
 /**
- * Fire an event: persist to DB and broadcast via Socket.io
+ * Fire-and-forget: persist the event to DB and broadcast via Socket.io.
+ * This is intentionally NON-BLOCKING so API handlers return immediately
+ * after the primary DB write completes, without waiting for the audit log.
  */
-export async function fireEvent(data: EventData): Promise<void> {
-  // 1. Persist event to database
-  const event = await prisma.event.create({
-    data: {
-      type: data.type,
-      actorId: data.actorId,
-      workspaceId: data.workspaceId || null,
-      canvasId: data.canvasId || null,
-      cardId: data.cardId || null,
-      metadata: data.metadata ? JSON.stringify(data.metadata) : null,
-    },
-    include: {
-      actor: {
-        select: { id: true, name: true, email: true, avatarUrl: true },
+export function fireEvent(data: EventData): void {
+  prisma.event
+    .create({
+      data: {
+        type: data.type,
+        actorId: data.actorId,
+        workspaceId: data.workspaceId || null,
+        canvasId: data.canvasId || null,
+        cardId: data.cardId || null,
+        metadata: data.metadata ? JSON.stringify(data.metadata) : null,
       },
-    },
-  });
+      include: {
+        actor: {
+          select: { id: true, name: true, email: true, avatarUrl: true },
+        },
+      },
+    })
+    .then((event) => {
+      if (!io) return;
 
-  // 2. Broadcast via Socket.io if available
-  if (io) {
-    const payload = {
-      ...event,
-      metadata: event.metadata ? JSON.parse(event.metadata) : null,
-    };
+      const payload = {
+        ...event,
+        metadata: event.metadata ? JSON.parse(event.metadata) : null,
+      };
 
-    // Broadcast to canvas room
-    if (data.canvasId) {
-      io.to(`canvas:${data.canvasId}`).emit('event', payload);
-    }
+      // Broadcast to canvas room
+      if (data.canvasId) {
+        io.to(`canvas:${data.canvasId}`).emit('event', payload);
+      }
 
-    // Broadcast to workspace room
-    if (data.workspaceId) {
-      io.to(`workspace:${data.workspaceId}`).emit('event', payload);
-    }
-  }
+      // Broadcast to workspace room
+      if (data.workspaceId) {
+        io.to(`workspace:${data.workspaceId}`).emit('event', payload);
+      }
+    })
+    .catch((err) => {
+      // Never crash the server over an audit-log failure
+      console.error('[fireEvent] Failed to persist event:', err?.message ?? err);
+    });
 }
 
 /**
- * Create a notification for a user and push it via Socket.io
+ * Create a notification for a user and push it via Socket.io.
+ * Also fire-and-forget so the caller API route returns immediately.
  */
-export async function createNotification(params: {
+export function createNotification(params: {
   userId: string;
   type: string;
   title: string;
   message: string;
   metadata?: Record<string, unknown>;
-}): Promise<void> {
-  const notification = await prisma.notification.create({
-    data: {
-      userId: params.userId,
-      type: params.type,
-      title: params.title,
-      message: params.message,
-      metadata: params.metadata ? JSON.stringify(params.metadata) : null,
-    },
-  });
-
-  if (io) {
-    io.to(`user:${params.userId}`).emit('notification', {
-      ...notification,
-      metadata: notification.metadata ? JSON.parse(notification.metadata) : null,
+}): void {
+  prisma.notification
+    .create({
+      data: {
+        userId: params.userId,
+        type: params.type,
+        title: params.title,
+        message: params.message,
+        metadata: params.metadata ? JSON.stringify(params.metadata) : null,
+      },
+    })
+    .then((notification) => {
+      if (!io) return;
+      io.to(`user:${params.userId}`).emit('notification', {
+        ...notification,
+        metadata: notification.metadata
+          ? JSON.parse(notification.metadata)
+          : null,
+      });
+    })
+    .catch((err) => {
+      console.error('[createNotification] Failed:', err?.message ?? err);
     });
-  }
 }

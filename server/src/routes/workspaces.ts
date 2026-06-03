@@ -242,7 +242,7 @@ router.post(
         },
       });
 
-      await fireEvent({
+      fireEvent({
         type: 'member.joined',
         actorId: req.user!.id,
         workspaceId: req.params.workspaceId,
@@ -311,7 +311,7 @@ router.patch(
         },
       });
 
-      await fireEvent({
+      fireEvent({
         type: 'member.role_changed',
         actorId: req.user!.id,
         workspaceId: req.params.workspaceId,
@@ -426,7 +426,7 @@ router.post(
 
       // If the user already exists, notify them
       if (existingUser) {
-        await createNotification({
+        createNotification({
           userId: existingUser.id,
           type: 'workspace_invite',
           title: 'Workspace Invitation',

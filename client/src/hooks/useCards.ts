@@ -64,6 +64,7 @@ export const mapCardFromServer = (card: any): Card => ({
   createdBy: card.created_by || '',
   createdAt: card.createdAt,
   updatedAt: card.updatedAt,
+  completed: card.completed || false,
   assignees: card.assignees?.map((a: any) => ({
     cardId: a.cardId,
     userId: a.userId,
@@ -71,7 +72,9 @@ export const mapCardFromServer = (card: any): Card => ({
       id: a.user.id,
       name: a.user.name,
       email: a.user.email,
-      avatar_url: a.user.avatarUrl, // Normalize to camelCase/snakeCase expected by client
+      avatarUrl: a.user.avatarUrl,
+      avatar_url: a.user.avatarUrl,
+      createdAt: a.user.createdAt || new Date().toISOString(),
     },
     assignedAt: a.assignedAt,
   })) || [],
@@ -79,9 +82,27 @@ export const mapCardFromServer = (card: any): Card => ({
   subtasks: card.subtasks || card.subTasks || [],
 });
 
+// ─── Column cache: avoid re-fetching canvas on every card mutation ──────────
+
+function useCanvasColumns(canvasId: string) {
+  return useQuery({
+    queryKey: ['canvas-columns', canvasId],
+    queryFn: async () => {
+      const { data } = await api.get(`/canvases/${canvasId}`);
+      return (data.data?.canvas?.columns || []) as Array<{ id: string; name: string }>;
+    },
+    enabled: !!canvasId,
+    staleTime: 1000 * 60 * 5, // 5 minutes — columns rarely change
+    gcTime: 1000 * 60 * 30,   // keep in cache 30 minutes
+  });
+}
+
 export function useCards(canvasId: string) {
   const queryClient = useQueryClient();
   const queryKey = ['cards', canvasId];
+
+  // Pre-load columns into cache (used by mutations without extra fetch)
+  const { data: canvasColumns = [] } = useCanvasColumns(canvasId);
 
   const { data: cards, isLoading } = useQuery({
     queryKey,
@@ -91,22 +112,26 @@ export function useCards(canvasId: string) {
       return rawCards.map(mapCardFromServer);
     },
     enabled: !!canvasId,
+    staleTime: 1000 * 30, // 30 seconds — serve from cache, refetch silently
   });
+
+  // ─── Helper: resolve columnId from status without extra HTTP call ─────────
+  const resolveColumnId = (status: string): string | undefined => {
+    const col = canvasColumns.find(
+      (c) => mapColumnNameToStatus(c.name) === status
+    );
+    return col?.id;
+  };
 
   const createMutation = useMutation({
     mutationFn: async (newCard: Partial<Card>) => {
-      // 1. Get the canvas to find its columns
-      const { data: canvasRes } = await api.get(`/canvases/${canvasId}`);
-      const columns = canvasRes.data?.canvas?.columns || [];
+      // Use cached columns — no extra HTTP call
       const targetStatus = newCard.status || 'not_started';
-      const targetColumn = columns.find(
-        (col: any) => mapColumnNameToStatus(col.name) === targetStatus
-      );
-      const columnId = targetColumn?.id || (columns[0]?.id);
+      const columnId =
+        resolveColumnId(targetStatus) ?? canvasColumns[0]?.id;
 
       if (!columnId) throw new Error('No column found for this canvas');
 
-      // 2. Create the card
       const payload = {
         canvasId,
         columnId,
@@ -123,9 +148,11 @@ export function useCards(canvasId: string) {
     onMutate: async (newCard) => {
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData<Card[]>(queryKey);
+
+      // Build fully-shaped optimistic card — renders immediately on board
       const optimistic: Card = {
         id: `temp-${Date.now()}`,
-        canvasId: canvasId,
+        canvasId,
         title: newCard.title || '',
         status: newCard.status || 'not_started',
         priority: newCard.priority || 1,
@@ -134,8 +161,14 @@ export function useCards(canvasId: string) {
         createdBy: '',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        assignees: [],
+        labels: [],
+        subtasks: [],
+        completed: false,
+        _isPending: true,
         ...newCard,
-      } as Card;
+      } as Card & { _isPending?: boolean };
+
       queryClient.setQueryData<Card[]>(queryKey, [...(previous || []), optimistic]);
       return { previous };
     },
@@ -152,21 +185,14 @@ export function useCards(canvasId: string) {
   const updateMutation = useMutation({
     mutationFn: async (updates: Partial<Card> & { id: string }) => {
       const { id, status, ...rest } = updates;
-      
+
+      // Use cached columns — no extra HTTP call
       let columnId: string | undefined = undefined;
       if (status) {
-        // Fetch columns to find matching columnId
-        const { data: canvasRes } = await api.get(`/canvases/${canvasId}`);
-        const columns = canvasRes.data?.canvas?.columns || [];
-        const targetColumn = columns.find(
-          (col: any) => mapColumnNameToStatus(col.name) === status
-        );
-        columnId = targetColumn?.id;
+        columnId = resolveColumnId(status);
       }
 
-      const payload: any = {
-        ...rest,
-      };
+      const payload: any = { ...rest };
       if (updates.priority !== undefined) {
         payload.priority = mapPriorityToString(updates.priority);
       }
@@ -180,10 +206,10 @@ export function useCards(canvasId: string) {
     onMutate: async (updates) => {
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData<Card[]>(queryKey);
-      
+
       const mappedUpdates = { ...updates };
-      if (updates.position !== undefined) {
-        (mappedUpdates as any).orderIndex = updates.position;
+      if ((updates as any).position !== undefined) {
+        (mappedUpdates as any).orderIndex = (updates as any).position;
       }
       if (updates.assignees) {
         mappedUpdates.assignees = (updates.assignees as any[]).map((u: any) => {
@@ -197,6 +223,7 @@ export function useCards(canvasId: string) {
                 email: u.user.email,
                 avatarUrl: u.user.avatarUrl || u.user.avatar_url,
                 avatar_url: u.user.avatarUrl || u.user.avatar_url,
+                createdAt: u.user.createdAt || new Date().toISOString(),
               },
               assignedAt: u.assignedAt || new Date().toISOString(),
             };
@@ -210,6 +237,7 @@ export function useCards(canvasId: string) {
               email: u.email,
               avatarUrl: u.avatarUrl || u.avatar_url,
               avatar_url: u.avatarUrl || u.avatar_url,
+              createdAt: new Date().toISOString(),
             },
             assignedAt: new Date().toISOString(),
           };
@@ -218,7 +246,9 @@ export function useCards(canvasId: string) {
 
       queryClient.setQueryData<Card[]>(queryKey, (old) =>
         old?.map((card) =>
-          card.id === updates.id ? { ...card, ...mappedUpdates, updatedAt: new Date().toISOString() } : card
+          card.id === updates.id
+            ? { ...card, ...mappedUpdates, updatedAt: new Date().toISOString() }
+            : card
         )
       );
       return { previous };
@@ -240,6 +270,7 @@ export function useCards(canvasId: string) {
     onMutate: async (cardId) => {
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData<Card[]>(queryKey);
+      // Remove immediately — 0ms perceived deletion
       queryClient.setQueryData<Card[]>(queryKey, (old) =>
         old?.filter((card) => card.id !== cardId)
       );
@@ -309,31 +340,32 @@ export function useCards(canvasId: string) {
 
   const bulkUpdateCardsMutation = useMutation({
     mutationFn: async ({ ids, updates }: { ids: string[]; updates: Partial<Card> }) => {
-      await Promise.all(
-        ids.map(async (id) => {
-          const { status, ...rest } = updates;
-          let columnId: string | undefined = undefined;
-          if (status) {
-            const { data: canvasRes } = await api.get(`/canvases/${canvasId}`);
-            const columns = canvasRes.data?.canvas?.columns || [];
-            const targetColumn = columns.find(
-              (col: any) => mapColumnNameToStatus(col.name) === status
-            );
-            columnId = targetColumn?.id;
-          }
+      // Single bulk request — resolves columnId from cache, no extra fetches
+      const { status, ...rest } = updates;
+      const columnId = status ? resolveColumnId(status) : undefined;
 
-          const payload: any = {
-            ...rest,
-          };
-          if (updates.priority !== undefined) {
-            payload.priority = mapPriorityToString(updates.priority);
-          }
-          if (columnId) {
-            payload.columnId = columnId;
-          }
-          await api.patch(`/cards/${id}`, payload);
-        })
+      const payload: any = { ...rest };
+      if (updates.priority !== undefined) {
+        payload.priority = mapPriorityToString(updates.priority);
+      }
+      if (columnId) {
+        payload.columnId = columnId;
+      }
+
+      await Promise.all(ids.map((id) => api.patch(`/cards/${id}`, payload)));
+    },
+    onMutate: async ({ ids, updates }) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<Card[]>(queryKey);
+      queryClient.setQueryData<Card[]>(queryKey, (old) =>
+        old?.map((card) =>
+          ids.includes(card.id) ? { ...card, ...updates } : card
+        )
       );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(queryKey, context.previous);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey });
@@ -391,13 +423,7 @@ export function useCards(canvasId: string) {
       )
     );
     try {
-      // Fetch columns to find matching columnId
-      const { data: canvasRes } = await api.get(`/canvases/${canvasId}`);
-      const columns = canvasRes.data?.canvas?.columns || [];
-      const targetColumn = columns.find(
-        (col: any) => mapColumnNameToStatus(col.name) === newStatus
-      );
-      const columnId = targetColumn?.id;
+      const columnId = resolveColumnId(newStatus);
       if (!columnId) throw new Error('No matching column found');
 
       await api.post(`/cards/${cardId}/move`, {
@@ -427,4 +453,3 @@ export function useCards(canvasId: string) {
     reorderCards: reorderMutation.mutateAsync,
   };
 }
-

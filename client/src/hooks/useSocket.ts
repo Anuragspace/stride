@@ -18,6 +18,16 @@ export function useSocket(canvasId?: string) {
       const card = mapCardFromServer(rawCard);
       queryClient.setQueryData<Card[]>(['cards', canvasId], (old) => {
         if (!old) return [card];
+        // Don't duplicate — but replace the matching temp card if title matches
+        const hasTempMatch = old.some(
+          (c) => (c as any)._isPending && c.title === card.title
+        );
+        if (hasTempMatch) {
+          // Replace temp card with the real server card
+          return old.map((c) =>
+            (c as any)._isPending && c.title === card.title ? card : c
+          );
+        }
         if (old.some((c) => c.id === card.id)) return old;
         return [...old, card];
       });
@@ -25,9 +35,12 @@ export function useSocket(canvasId?: string) {
 
     const handleCardUpdated = (rawCard: any) => {
       const card = mapCardFromServer(rawCard);
-      queryClient.setQueryData<Card[]>(['cards', canvasId], (old) =>
-        old?.map((c) => (c.id === card.id ? card : c))
-      );
+      queryClient.setQueryData<Card[]>(['cards', canvasId], (old) => {
+        if (!old) return [card];
+        // Only update if id matches an existing real card (not a temp)
+        if (!old.some((c) => c.id === card.id)) return [...old, card];
+        return old.map((c) => (c.id === card.id ? card : c));
+      });
     };
 
     const handleCardDeleted = ({ cardId }: { cardId: string }) => {
