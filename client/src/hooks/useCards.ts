@@ -340,6 +340,47 @@ export function useCards(canvasId: string) {
     },
   });
 
+  const reorderMutation = useMutation({
+    mutationFn: async (payload: {
+      updates: { id: string; position: number; assigneeIds?: string[] }[];
+      optimisticCards?: Card[];
+    }) => {
+      const { data } = await api.post('/cards/reorder', { updates: payload.updates });
+      const rawCards = data.data?.cards || [];
+      return rawCards.map(mapCardFromServer);
+    },
+    onMutate: async (payload) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<Card[]>(queryKey);
+
+      if (payload.optimisticCards) {
+        queryClient.setQueryData<Card[]>(queryKey, payload.optimisticCards);
+      } else {
+        queryClient.setQueryData<Card[]>(queryKey, (old) => {
+          if (!old) return [];
+          return old.map((card) => {
+            const update = payload.updates.find((u) => u.id === card.id);
+            if (!update) return card;
+            return {
+              ...card,
+              orderIndex: update.position,
+              updatedAt: new Date().toISOString(),
+            };
+          });
+        });
+      }
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(queryKey, context.previous);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey });
+    },
+  });
+
   const moveCard = async (cardId: string, newStatus: CardStatus, newPosition: number) => {
     const previous = queryClient.getQueryData<Card[]>(queryKey);
     queryClient.setQueryData<Card[]>(queryKey, (old) =>
@@ -383,6 +424,7 @@ export function useCards(canvasId: string) {
     bulkUpdateCards: bulkUpdateCardsMutation.mutateAsync,
     isBulkUpdating: bulkUpdateCardsMutation.isPending,
     moveCard,
+    reorderCards: reorderMutation.mutateAsync,
   };
 }
 

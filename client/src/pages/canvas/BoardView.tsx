@@ -40,7 +40,7 @@ export function BoardView({
 }: BoardViewProps) {
   const [activeCard, setActiveCard] = useState<Card | null>(null);
   const [selectedCardIds, setSelectedCardIds] = useState<string[]>([]);
-  const { updateCard, bulkUpdateCards, deleteCard } = useCards(canvasId);
+  const { updateCard, bulkUpdateCards, deleteCard, reorderCards } = useCards(canvasId);
   const { members, isLoadingMembers } = useWorkspace();
   const { user: currentUser } = useAuth();
   const { error: showError } = useToast();
@@ -126,56 +126,182 @@ export function BoardView({
       targetLaneId = assignees.length > 0 ? assignees[0].userId : 'unassigned';
     }
 
-    // Calculate new position index within the target lane
-    const targetCards = [...(columnCards[targetLaneId] || [])];
-    const filteredTargetCards = targetCards.filter((c) => c.id !== activeCardId);
-    
-    let newIndex = 0;
-    if (overId === targetLaneId) {
-      newIndex = filteredTargetCards.length;
-    } else {
-      const overIndex = filteredTargetCards.findIndex((c) => c.id === overId);
-      newIndex = overIndex !== -1 ? overIndex : filteredTargetCards.length;
-    }
-
-    // Construct the reordered cards list for the target lane
-    const finalCards = [...filteredTargetCards];
     const activeCardObj = cards.find((c) => c.id === activeCardId);
-    if (activeCardObj) {
-      finalCards.splice(newIndex, 0, activeCardObj);
-    }
+    if (!activeCardObj) return;
 
-    // Sequentially update positions of all cards in the target lane to guarantee order
-    for (let i = 0; i < finalCards.length; i++) {
-      const c = finalCards[i];
-      if (c.id === activeCardId) {
-        if (targetLaneId === 'unassigned') {
-          await updateCard({
-            id: activeCardId,
-            assignees: [],
+    const sourceAssignees = activeCardObj.assignees || [];
+    const sourceLaneId = sourceAssignees.length > 0 ? sourceAssignees[0].userId : 'unassigned';
+
+    const updates: { id: string; position: number; assigneeIds?: string[] }[] = [];
+    const optimisticCardsMap = new Map<string, Card>();
+
+    // Initialize map with all current cards
+    cards.forEach((c) => {
+      optimisticCardsMap.set(c.id, { ...c });
+    });
+
+    if (sourceLaneId === targetLaneId) {
+      // Reordering within the same lane
+      const targetCards = [...(columnCards[targetLaneId] || [])];
+      const filtered = targetCards.filter((c) => c.id !== activeCardId);
+      
+      let newIndex = 0;
+      if (overId === targetLaneId) {
+        newIndex = filtered.length;
+      } else {
+        const overIndex = filtered.findIndex((c) => c.id === overId);
+        newIndex = overIndex !== -1 ? overIndex : filtered.length;
+      }
+
+      const finalCards = [...filtered];
+      finalCards.splice(newIndex, 0, activeCardObj);
+
+      for (let i = 0; i < finalCards.length; i++) {
+        const c = finalCards[i];
+        if (c.id === activeCardId) {
+          const assigneeIds = targetLaneId === 'unassigned' ? [] : [targetLaneId];
+          updates.push({
+            id: c.id,
             position: i,
+            assigneeIds,
+          });
+
+          // Optimistic update
+          const targetMember = members?.find((m) => m.userId === targetLaneId);
+          optimisticCardsMap.set(c.id, {
+            ...c,
+            orderIndex: i,
+            assignees: targetLaneId === 'unassigned'
+              ? []
+              : targetMember
+                ? [
+                    {
+                      cardId: c.id,
+                      userId: targetMember.user.id,
+                      user: {
+                        id: targetMember.user.id,
+                        name: targetMember.user.name,
+                        email: targetMember.user.email,
+                        avatarUrl: targetMember.user.avatarUrl,
+                        avatar_url: targetMember.user.avatarUrl,
+                        createdAt: new Date().toISOString(),
+                      } as any,
+                      assignedAt: new Date().toISOString(),
+                    },
+                  ]
+                : c.assignees,
           });
         } else {
-          const targetMember = members?.find((m) => m.userId === targetLaneId);
-          if (targetMember) {
-            await updateCard({
-              id: activeCardId,
-              assignees: [{
-                cardId: activeCardId,
-                userId: targetMember.user.id,
-                user: targetMember.user,
-                assignedAt: new Date().toISOString()
-              }],
-              position: i,
+          updates.push({
+            id: c.id,
+            position: i,
+          });
+          
+          const existingOpt = optimisticCardsMap.get(c.id);
+          if (existingOpt) {
+            optimisticCardsMap.set(c.id, {
+              ...existingOpt,
+              orderIndex: i,
             });
           }
         }
-      } else if (c.orderIndex !== i) {
-        await updateCard({
+      }
+    } else {
+      // Dragging to a different lane
+      // 1. Target Lane
+      const targetCards = [...(columnCards[targetLaneId] || [])];
+      const filteredTarget = targetCards.filter((c) => c.id !== activeCardId);
+
+      let newIndex = 0;
+      if (overId === targetLaneId) {
+        newIndex = filteredTarget.length;
+      } else {
+        const overIndex = filteredTarget.findIndex((c) => c.id === overId);
+        newIndex = overIndex !== -1 ? overIndex : filteredTarget.length;
+      }
+
+      const finalTargetCards = [...filteredTarget];
+      finalTargetCards.splice(newIndex, 0, activeCardObj);
+
+      for (let i = 0; i < finalTargetCards.length; i++) {
+        const c = finalTargetCards[i];
+        if (c.id === activeCardId) {
+          const assigneeIds = targetLaneId === 'unassigned' ? [] : [targetLaneId];
+          updates.push({
+            id: c.id,
+            position: i,
+            assigneeIds,
+          });
+
+          // Optimistic update
+          const targetMember = members?.find((m) => m.userId === targetLaneId);
+          optimisticCardsMap.set(c.id, {
+            ...c,
+            orderIndex: i,
+            assignees: targetLaneId === 'unassigned'
+              ? []
+              : targetMember
+                ? [
+                    {
+                      cardId: c.id,
+                      userId: targetMember.user.id,
+                      user: {
+                        id: targetMember.user.id,
+                        name: targetMember.user.name,
+                        email: targetMember.user.email,
+                        avatarUrl: targetMember.user.avatarUrl,
+                        avatar_url: targetMember.user.avatarUrl,
+                        createdAt: new Date().toISOString(),
+                      } as any,
+                      assignedAt: new Date().toISOString(),
+                    },
+                  ]
+                : c.assignees,
+          });
+        } else {
+          updates.push({
+            id: c.id,
+            position: i,
+          });
+
+          const existingOpt = optimisticCardsMap.get(c.id);
+          if (existingOpt) {
+            optimisticCardsMap.set(c.id, {
+              ...existingOpt,
+              orderIndex: i,
+            });
+          }
+        }
+      }
+
+      // 2. Source Lane
+      const sourceCards = [...(columnCards[sourceLaneId] || [])];
+      const finalSourceCards = sourceCards.filter((c) => c.id !== activeCardId);
+
+      for (let i = 0; i < finalSourceCards.length; i++) {
+        const c = finalSourceCards[i];
+        updates.push({
           id: c.id,
           position: i,
         });
+
+        const existingOpt = optimisticCardsMap.get(c.id);
+        if (existingOpt) {
+          optimisticCardsMap.set(c.id, {
+            ...existingOpt,
+            orderIndex: i,
+          });
+        }
       }
+    }
+
+    const optimisticCards = Array.from(optimisticCardsMap.values());
+
+    try {
+      await reorderCards({ updates, optimisticCards });
+    } catch (err) {
+      console.error('Failed to reorder cards:', err);
+      showError('Failed to update card position');
     }
   };
 

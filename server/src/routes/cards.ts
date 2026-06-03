@@ -42,6 +42,14 @@ const moveCardSchema = z.object({
   position: z.number().int().min(0),
 });
 
+const reorderCardsSchema = z.object({
+  updates: z.array(z.object({
+    id: z.string().uuid(),
+    position: z.number().int().min(0),
+    assigneeIds: z.array(z.string().uuid()).optional(),
+  })),
+});
+
 const addLabelSchema = z.object({
   name: z.string().min(1).max(50),
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).default('#3B82F6'),
@@ -370,42 +378,44 @@ router.patch('/:cardId', async (req: Request, res: Response, next: NextFunction)
         .filter(Boolean) as { name: string; color: string }[];
     }
 
-    if (targetAssigneeIds !== undefined) {
-      await prisma.cardAssignee.deleteMany({
-        where: { cardId: req.params.cardId },
-      });
-    }
+    const card = await prisma.$transaction(async (tx) => {
+      if (targetAssigneeIds !== undefined) {
+        await tx.cardAssignee.deleteMany({
+          where: { cardId: req.params.cardId },
+        });
+      }
 
-    if (targetLabels !== undefined) {
-      await prisma.cardLabel.deleteMany({
-        where: { cardId: req.params.cardId },
-      });
-    }
+      if (targetLabels !== undefined) {
+        await tx.cardLabel.deleteMany({
+          where: { cardId: req.params.cardId },
+        });
+      }
 
-    const card = await prisma.card.update({
-      where: { id: req.params.cardId },
-      data: {
-        ...rest,
-        dueDate: rest.dueDate !== undefined
-          ? (rest.dueDate ? new Date(rest.dueDate) : null)
-          : undefined,
-        assignees: targetAssigneeIds !== undefined ? {
-          create: targetAssigneeIds.map((uid) => ({ userId: uid })),
-        } : undefined,
-        labels: targetLabels !== undefined ? {
-          create: targetLabels,
-        } : undefined,
-      },
-      include: {
-        column: { select: { id: true, name: true, color: true } },
-        assignees: {
-          include: {
-            user: { select: { id: true, name: true, email: true, avatarUrl: true } },
-          },
+      return tx.card.update({
+        where: { id: req.params.cardId },
+        data: {
+          ...rest,
+          dueDate: rest.dueDate !== undefined
+            ? (rest.dueDate ? new Date(rest.dueDate) : null)
+            : undefined,
+          assignees: targetAssigneeIds !== undefined ? {
+            create: targetAssigneeIds.map((uid) => ({ userId: uid })),
+          } : undefined,
+          labels: targetLabels !== undefined ? {
+            create: targetLabels,
+          } : undefined,
         },
-        labels: true,
-        _count: { select: { comments: true, subTasks: true, attachments: true } },
-      },
+        include: {
+          column: { select: { id: true, name: true, color: true } },
+          assignees: {
+            include: {
+              user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+            },
+          },
+          labels: true,
+          _count: { select: { comments: true, subTasks: true, attachments: true } },
+        },
+      });
     });
 
     // Fire specific events based on what changed
@@ -451,6 +461,73 @@ router.patch('/:cardId', async (req: Request, res: Response, next: NextFunction)
 
     res.json({
       data: { card },
+      error: null,
+      meta: null,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ─── POST /api/cards/reorder ───────────────────────────────────────────────
+
+router.post('/reorder', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { updates } = reorderCardsSchema.parse(req.body);
+
+    const cardsWithAssigneeChanges = updates.filter(u => u.assigneeIds !== undefined);
+
+    const transactionActions = [];
+
+    // Add deleteMany actions for assignees first to avoid unique key conflicts
+    for (const u of cardsWithAssigneeChanges) {
+      transactionActions.push(
+        prisma.cardAssignee.deleteMany({
+          where: { cardId: u.id },
+        })
+      );
+    }
+
+    // Add updates actions (which include position and assignee inserts)
+    for (const u of updates) {
+      transactionActions.push(
+        prisma.card.update({
+          where: { id: u.id },
+          data: {
+            position: u.position,
+            assignees: u.assigneeIds !== undefined ? {
+              create: u.assigneeIds.map(uid => ({ userId: uid })),
+            } : undefined,
+          },
+          include: {
+            column: { select: { id: true, name: true, color: true } },
+            assignees: {
+              include: {
+                user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+              },
+            },
+            labels: true,
+            _count: { select: { comments: true, subTasks: true, attachments: true } },
+          },
+        })
+      );
+    }
+
+    const results = await prisma.$transaction(transactionActions);
+
+    // Extract the updated card objects (which are returned by the update statements)
+    const updatedCards = results.slice(cardsWithAssigneeChanges.length) as any[];
+
+    // Emit WebSocket update for each updated card
+    const io = getSocketIO();
+    if (io) {
+      for (const card of updatedCards) {
+        io.to(`canvas:${card.canvasId}`).emit('card:updated', card);
+      }
+    }
+
+    res.json({
+      data: { cards: updatedCards },
       error: null,
       meta: null,
     });
