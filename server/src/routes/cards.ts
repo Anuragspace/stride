@@ -195,20 +195,19 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
     const body = createCardSchema.parse(req.body);
     const userId = req.user!.id;
 
-    // Verify column belongs to canvas
-    const column = await prisma.canvasColumn.findUnique({
-      where: { id: body.columnId },
-    });
+    // Single transaction: verify column, get max position, fetch workspaceId, create card
+    const [column, canvas, maxPos] = await prisma.$transaction([
+      prisma.canvasColumn.findUnique({ where: { id: body.columnId } }),
+      prisma.canvas.findUnique({ where: { id: body.canvasId }, select: { workspaceId: true } }),
+      prisma.card.aggregate({
+        where: { columnId: body.columnId, archived: false },
+        _max: { position: true },
+      }),
+    ]);
 
     if (!column || column.canvasId !== body.canvasId) {
       throw new BadRequestError('Column does not belong to the specified canvas');
     }
-
-    // Get max position in this column
-    const maxPos = await prisma.card.aggregate({
-      where: { columnId: body.columnId, archived: false },
-      _max: { position: true },
-    });
 
     const card = await prisma.card.create({
       data: {
@@ -239,12 +238,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
       },
     });
 
-    // Get canvas for workspaceId
-    const canvas = await prisma.canvas.findUnique({
-      where: { id: body.canvasId },
-      select: { workspaceId: true },
-    });
-
+    // Fire-and-forget: audit log + notifications do not block the response
     fireEvent({
       type: 'card.created',
       actorId: userId,
@@ -254,7 +248,6 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
       metadata: { title: card.title, columnName: card.column.name },
     });
 
-    // Notify assigned users
     if (body.assigneeIds) {
       for (const assigneeId of body.assigneeIds) {
         if (assigneeId !== userId) {
@@ -284,6 +277,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
     next(error);
   }
 });
+
 
 // ─── GET /api/cards/:cardId ─────────────────────────────────────────────────
 
@@ -340,15 +334,7 @@ router.patch('/:cardId', async (req: Request, res: Response, next: NextFunction)
     const body = updateCardSchema.parse(req.body);
     const { assigneeIds, assignees, labels, ...rest } = body;
     const userId = req.user!.id;
-
-    const existing = await prisma.card.findUnique({
-      where: { id: req.params.cardId },
-      include: { canvas: { select: { workspaceId: true } } },
-    });
-
-    if (!existing) {
-      throw new NotFoundError('Card');
-    }
+    const cardId = req.params.cardId;
 
     // Normalize assignee user IDs
     let targetAssigneeIds: string[] | undefined = undefined;
@@ -378,32 +364,28 @@ router.patch('/:cardId', async (req: Request, res: Response, next: NextFunction)
         .filter(Boolean) as { name: string; color: string }[];
     }
 
+    // Single transaction — no pre-fetch needed; events use card.canvasId from result
     const card = await prisma.$transaction(async (tx) => {
       if (targetAssigneeIds !== undefined) {
-        await tx.cardAssignee.deleteMany({
-          where: { cardId: req.params.cardId },
-        });
+        await tx.cardAssignee.deleteMany({ where: { cardId } });
       }
-
       if (targetLabels !== undefined) {
-        await tx.cardLabel.deleteMany({
-          where: { cardId: req.params.cardId },
-        });
+        await tx.cardLabel.deleteMany({ where: { cardId } });
       }
 
       return tx.card.update({
-        where: { id: req.params.cardId },
+        where: { id: cardId },
         data: {
           ...rest,
           dueDate: rest.dueDate !== undefined
             ? (rest.dueDate ? new Date(rest.dueDate) : null)
             : undefined,
-          assignees: targetAssigneeIds !== undefined ? {
-            create: targetAssigneeIds.map((uid) => ({ userId: uid })),
-          } : undefined,
-          labels: targetLabels !== undefined ? {
-            create: targetLabels,
-          } : undefined,
+          assignees: targetAssigneeIds !== undefined
+            ? { create: targetAssigneeIds.map((uid) => ({ userId: uid })) }
+            : undefined,
+          labels: targetLabels !== undefined
+            ? { create: targetLabels }
+            : undefined,
         },
         include: {
           column: { select: { id: true, name: true, color: true } },
@@ -418,39 +400,18 @@ router.patch('/:cardId', async (req: Request, res: Response, next: NextFunction)
       });
     });
 
-    // Fire specific events based on what changed
-    if (rest.priority && rest.priority !== existing.priority) {
-      fireEvent({
-        type: 'card.priority_changed',
-        actorId: userId,
-        workspaceId: existing.canvas.workspaceId,
-        canvasId: existing.canvasId,
-        cardId: card.id,
-        metadata: { oldPriority: existing.priority, newPriority: rest.priority },
-      });
+    // Fire-and-forget audit events (workspaceId optional — resolved async in fireEvent)
+    if (rest.priority) {
+      fireEvent({ type: 'card.priority_changed', actorId: userId, canvasId: card.canvasId, cardId: card.id, metadata: { newPriority: rest.priority } });
     }
-
-    if (rest.dueDate !== undefined && String(rest.dueDate) !== String(existing.dueDate)) {
-      fireEvent({
-        type: 'card.due_date_changed',
-        actorId: userId,
-        workspaceId: existing.canvas.workspaceId,
-        canvasId: existing.canvasId,
-        cardId: card.id,
-        metadata: { oldDueDate: existing.dueDate, newDueDate: rest.dueDate },
-      });
+    if (rest.dueDate !== undefined) {
+      fireEvent({ type: 'card.due_date_changed', actorId: userId, canvasId: card.canvasId, cardId: card.id, metadata: { newDueDate: rest.dueDate } });
     }
-
-    // Database workload optimization: only log edits for title renames, skipping description events
-    if (rest.title && rest.title !== existing.title) {
-      fireEvent({
-        type: 'card.edited',
-        actorId: userId,
-        workspaceId: existing.canvas.workspaceId,
-        canvasId: existing.canvasId,
-        cardId: card.id,
-        metadata: { title: card.title },
-      });
+    if (rest.title) {
+      fireEvent({ type: 'card.edited', actorId: userId, canvasId: card.canvasId, cardId: card.id, metadata: { title: card.title } });
+    }
+    if (targetAssigneeIds !== undefined) {
+      fireEvent({ type: 'card.assigned', actorId: userId, canvasId: card.canvasId, cardId: card.id, metadata: { assigneeCount: targetAssigneeIds.length } });
     }
 
     // Emit WebSocket update
@@ -459,15 +420,12 @@ router.patch('/:cardId', async (req: Request, res: Response, next: NextFunction)
       io.to(`canvas:${card.canvasId}`).emit('card:updated', card);
     }
 
-    res.json({
-      data: { card },
-      error: null,
-      meta: null,
-    });
+    res.json({ data: { card }, error: null, meta: null });
   } catch (error) {
     next(error);
   }
 });
+
 
 // ─── POST /api/cards/reorder ───────────────────────────────────────────────
 

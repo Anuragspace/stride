@@ -36,7 +36,22 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// ─── Health Check ───────────────────────────────────────────────────────────
+// Root path — friendly response for bare domain visits
+app.get('/', (_req, res) => {
+  res.json({
+    data: {
+      name: 'Stride API',
+      version: 'v1',
+      status: 'ok',
+      docs: '/api/v1/health',
+    },
+    error: null,
+    meta: null,
+  });
+});
+
+// Also accept /api/health as an alias (Render UptimeRobot-friendly)
+app.get('/api/health', (_req, res) => res.redirect('/api/v1/health'));
 
 app.get('/api/v1/health', (_req, res) => {
   res.json({
@@ -93,8 +108,8 @@ server.listen(PORT, () => {
   ║                                                   ║
   ║   🚀 Stride Server running on port ${PORT}          ║
   ║                                                   ║
-  ║   REST API:    http://localhost:${PORT}/api          ║
-  ║   Health:      http://localhost:${PORT}/api/health   ║
+  ║   REST API:    http://localhost:${PORT}/api/v1       ║
+  ║   Health:      http://localhost:${PORT}/api/v1/health║
   ║   Socket.io:   ws://localhost:${PORT}               ║
   ║                                                   ║
   ╚═══════════════════════════════════════════════════╝
