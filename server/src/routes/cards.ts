@@ -585,6 +585,26 @@ router.post('/:cardId/complete', async (req: Request, res: Response, next: NextF
       metadata: { title: card.title },
     });
 
+    // Notify assigned users
+    const actor = await prisma.user.findUnique({
+      where: { id: req.user!.id },
+      select: { name: true },
+    });
+    const actorName = actor?.name || 'Someone';
+    if (card.assignees) {
+      for (const assignee of card.assignees) {
+        if (assignee.userId !== req.user!.id) {
+          await createNotification({
+            userId: assignee.userId,
+            type: 'card.completed',
+            title: 'Card completed',
+            message: `"${card.title}" has been completed by ${actorName}`,
+            metadata: { cardId: card.id, canvasId: existing.canvasId },
+          });
+        }
+      }
+    }
+
     // Emit WebSocket update
     const io = getSocketIO();
     if (io) {

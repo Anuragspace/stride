@@ -257,6 +257,23 @@ export function useCards(canvasId: string) {
       const { data } = await api.post(`/cards/${cardId}/complete`);
       return mapCardFromServer(data.data.card);
     },
+    onMutate: async (cardId) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<Card[]>(queryKey);
+      queryClient.setQueryData<Card[]>(queryKey, (old) =>
+        old?.map((card) =>
+          card.id === cardId
+            ? { ...card, completed: true, completedAt: new Date().toISOString() }
+            : card
+        )
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(queryKey, context.previous);
+      }
+    },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey });
     },
@@ -266,6 +283,21 @@ export function useCards(canvasId: string) {
     mutationFn: async (cardId: string) => {
       const { data } = await api.post(`/cards/${cardId}/reopen`);
       return mapCardFromServer(data.data.card);
+    },
+    onMutate: async (cardId) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<Card[]>(queryKey);
+      queryClient.setQueryData<Card[]>(queryKey, (old) =>
+        old?.map((card) =>
+          card.id === cardId ? { ...card, completed: false, completedAt: null } : card
+        )
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(queryKey, context.previous);
+      }
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey });

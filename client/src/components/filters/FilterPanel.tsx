@@ -140,6 +140,31 @@ export function FilterPanel({ filters, onFiltersChange }: FilterPanelProps) {
                   ))}
                 </div>
               </div>
+
+              {/* Show Completed Toggle */}
+              <div className="flex items-center justify-between pt-[10px] border-t border-hairline/30">
+                <span className="text-[11px] font-semibold text-ink-subtle uppercase tracking-wider">
+                  Show Completed
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onFiltersChange({ ...filters, showCompleted: filters.showCompleted ? undefined : true })}
+                  className={cn(
+                    "relative inline-flex h-[18px] w-[34px] flex-shrink-0 cursor-pointer rounded-full border border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
+                    filters.showCompleted ? "bg-accent" : "bg-white/[0.08]"
+                  )}
+                  role="switch"
+                  aria-checked={!!filters.showCompleted}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      "pointer-events-none inline-block h-[14px] w-[14px] transform rounded-full bg-white shadow transition duration-200 ease-in-out",
+                      filters.showCompleted ? "translate-x-[16px]" : "translate-x-0"
+                    )}
+                  />
+                </button>
+              </div>
             </div>
 
             {/* Clear all */}

@@ -54,6 +54,7 @@ export function CardTile({
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleText, setTitleText] = useState(card.title);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [isCompleting, setIsCompleting] = useState(false);
 
   useEffect(() => {
     if (isEditingTitle && textareaRef.current) {
@@ -95,8 +96,20 @@ export function CardTile({
 
   const handleCompleteToggle = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    // Complete and remove the task instantly in one click!
-    await deleteCard(card.id);
+    if (isCompleting) return;
+
+    setIsCompleting(true);
+    try {
+      if (card.completed) {
+        await reopenCard(card.id);
+      } else {
+        await completeCard(card.id);
+      }
+    } catch (err) {
+      console.error('Failed to toggle completion status', err);
+    } finally {
+      setIsCompleting(false);
+    }
   };
 
   const handlePriorityCycle = async (e: React.MouseEvent) => {
@@ -189,10 +202,14 @@ export function CardTile({
         <div className="flex items-start gap-[8px] pr-[16px]">
           <button
             onClick={handleCompleteToggle}
-            className="flex-shrink-0 mt-[2px] text-ink-subtle hover:text-success transition-colors duration-100 relative z-20"
+            disabled={isCompleting}
+            className={cn(
+              "flex-shrink-0 mt-[2px] text-ink-subtle hover:text-success transition-all duration-200 relative z-20 hover:scale-110 active:scale-90",
+              (card.completed || isCompleting) && "text-success"
+            )}
             aria-label={card.completed ? 'Reopen card' : 'Complete card'}
           >
-            {card.completed ? (
+            {(card.completed || isCompleting) ? (
               <CheckCircle2 className="w-[15px] h-[15px] text-success fill-success/10" />
             ) : (
               <Circle className="w-[15px] h-[15px]" />
@@ -216,8 +233,8 @@ export function CardTile({
               <h4
                 onDoubleClick={handleTitleDoubleClick}
                 className={cn(
-                  'text-[14px] font-semibold text-white/90 leading-snug select-text relative z-10 break-words',
-                  card.completed && 'text-ink-subtle line-through'
+                  'text-[14px] font-semibold text-white/90 leading-snug select-text relative z-10 break-words transition-all duration-200',
+                  (card.completed || isCompleting) && 'text-ink-subtle line-through opacity-50'
                 )}
                 title="Double click to edit title"
               >

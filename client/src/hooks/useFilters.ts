@@ -9,10 +9,12 @@ export function useFilters() {
     const status = searchParams.get('status')?.split(',') as CardStatus[] | undefined;
     const priority = searchParams.get('priority')?.split(',').map(Number) as CardPriority[] | undefined;
     const type = searchParams.get('type')?.split(',') as CardType[] | undefined;
+    const showCompleted = searchParams.get('showCompleted') === 'true';
     return {
       status: status?.length ? status : undefined,
       priority: priority?.length ? priority : undefined,
       type: type?.length ? type : undefined,
+      showCompleted: showCompleted || undefined,
     };
   };
 
@@ -35,10 +37,12 @@ export function useFilters() {
     params.delete('status');
     params.delete('priority');
     params.delete('type');
+    params.delete('showCompleted');
     // Set new params
     if (newFilters.status?.length) params.set('status', newFilters.status.join(','));
     if (newFilters.priority?.length) params.set('priority', newFilters.priority.join(','));
     if (newFilters.type?.length) params.set('type', newFilters.type.join(','));
+    if (newFilters.showCompleted) params.set('showCompleted', 'true');
     setSearchParams(params, { replace: true });
   }, [searchParams, setSearchParams]);
 
@@ -53,6 +57,7 @@ export function useFilters() {
   const filterCards = useCallback(
     (cards: Card[]): Card[] => {
       return cards.filter((card) => {
+        if (card.completed && !filters.showCompleted) return false;
         if (filters.status?.length && !filters.status.includes(card.status as CardStatus)) return false;
         if (filters.priority?.length && !filters.priority.includes(card.priority as CardPriority)) return false;
         if (filters.type?.length && !filters.type.includes(card.type as CardType)) return false;
