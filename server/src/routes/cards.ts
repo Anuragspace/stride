@@ -475,7 +475,10 @@ router.post('/reorder', async (req: Request, res: Response, next: NextFunction) 
   try {
     const { updates } = reorderCardsSchema.parse(req.body);
 
-    const cardsWithAssigneeChanges = updates.filter(u => u.assigneeIds !== undefined);
+    // Sort updates by id alphabetically to prevent deadlock situations during concurrent bulk reorders
+    const sortedUpdates = [...updates].sort((a, b) => a.id.localeCompare(b.id));
+
+    const cardsWithAssigneeChanges = sortedUpdates.filter(u => u.assigneeIds !== undefined);
 
     const transactionActions = [];
 
@@ -489,7 +492,7 @@ router.post('/reorder', async (req: Request, res: Response, next: NextFunction) 
     }
 
     // Add updates actions (which include position and assignee inserts)
-    for (const u of updates) {
+    for (const u of sortedUpdates) {
       transactionActions.push(
         prisma.card.update({
           where: { id: u.id },
