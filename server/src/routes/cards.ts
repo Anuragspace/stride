@@ -370,6 +370,18 @@ router.patch('/:cardId', async (req: Request, res: Response, next: NextFunction)
         .filter(Boolean) as { name: string; color: string }[];
     }
 
+    if (targetAssigneeIds !== undefined) {
+      await prisma.cardAssignee.deleteMany({
+        where: { cardId: req.params.cardId },
+      });
+    }
+
+    if (targetLabels !== undefined) {
+      await prisma.cardLabel.deleteMany({
+        where: { cardId: req.params.cardId },
+      });
+    }
+
     const card = await prisma.card.update({
       where: { id: req.params.cardId },
       data: {
@@ -378,11 +390,9 @@ router.patch('/:cardId', async (req: Request, res: Response, next: NextFunction)
           ? (rest.dueDate ? new Date(rest.dueDate) : null)
           : undefined,
         assignees: targetAssigneeIds !== undefined ? {
-          deleteMany: {},
           create: targetAssigneeIds.map((uid) => ({ userId: uid })),
         } : undefined,
         labels: targetLabels !== undefined ? {
-          deleteMany: {},
           create: targetLabels,
         } : undefined,
       },
