@@ -112,7 +112,6 @@ export function BoardView({
     if (!over) return;
 
     const activeCardId = active.id as string;
-    
     const overId = over.id as string;
 
     // Find target column/lane
@@ -127,25 +126,54 @@ export function BoardView({
       targetLaneId = assignees.length > 0 ? assignees[0].userId : 'unassigned';
     }
 
-    // Trigger update assignee lists!
-    if (targetLaneId === 'unassigned') {
-      // Clear all assignees from this card
-      await updateCard({
-        id: activeCardId,
-        assignees: [],
-      });
+    // Calculate new position index within the target lane
+    const targetCards = [...(columnCards[targetLaneId] || [])];
+    const filteredTargetCards = targetCards.filter((c) => c.id !== activeCardId);
+    
+    let newIndex = 0;
+    if (overId === targetLaneId) {
+      newIndex = filteredTargetCards.length;
     } else {
-      // Assign to target member
-      const targetMember = members?.find((m) => m.userId === targetLaneId);
-      if (targetMember) {
+      const overIndex = filteredTargetCards.findIndex((c) => c.id === overId);
+      newIndex = overIndex !== -1 ? overIndex : filteredTargetCards.length;
+    }
+
+    // Construct the reordered cards list for the target lane
+    const finalCards = [...filteredTargetCards];
+    const activeCardObj = cards.find((c) => c.id === activeCardId);
+    if (activeCardObj) {
+      finalCards.splice(newIndex, 0, activeCardObj);
+    }
+
+    // Sequentially update positions of all cards in the target lane to guarantee order
+    for (let i = 0; i < finalCards.length; i++) {
+      const c = finalCards[i];
+      if (c.id === activeCardId) {
+        if (targetLaneId === 'unassigned') {
+          await updateCard({
+            id: activeCardId,
+            assignees: [],
+            position: i,
+          });
+        } else {
+          const targetMember = members?.find((m) => m.userId === targetLaneId);
+          if (targetMember) {
+            await updateCard({
+              id: activeCardId,
+              assignees: [{
+                cardId: activeCardId,
+                userId: targetMember.user.id,
+                user: targetMember.user,
+                assignedAt: new Date().toISOString()
+              }],
+              position: i,
+            });
+          }
+        }
+      } else if (c.orderIndex !== i) {
         await updateCard({
-          id: activeCardId,
-          assignees: [{
-            cardId: activeCardId,
-            userId: targetMember.user.id,
-            user: targetMember.user,
-            assignedAt: new Date().toISOString()
-          }],
+          id: c.id,
+          position: i,
         });
       }
     }

@@ -182,6 +182,9 @@ export function useCards(canvasId: string) {
       const previous = queryClient.getQueryData<Card[]>(queryKey);
       
       const mappedUpdates = { ...updates };
+      if (updates.position !== undefined) {
+        (mappedUpdates as any).orderIndex = updates.position;
+      }
       if (updates.assignees) {
         mappedUpdates.assignees = (updates.assignees as any[]).map((u: any) => {
           if (u.user) {
