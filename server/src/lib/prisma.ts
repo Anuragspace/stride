@@ -1,18 +1,34 @@
 import { PrismaClient } from '@prisma/client';
+import { Pool, neonConfig } from '@neondatabase/serverless';
+import { PrismaNeon } from '@prisma/adapter-neon';
+import ws from 'ws';
 
-// ─── Connection pool sizing ──────────────────────────────────────────────────
-// On Render free tier (512MB RAM), each Postgres connection uses ~20-50MB.
-// Keep the pool small to avoid OOM. pgBouncer on the pooler side handles
-// multiplexing, so Prisma only needs 2-3 connections max.
-const CONNECTION_LIMIT = process.env.NODE_ENV === 'production' ? 3 : 5;
+// ─── Neon WebSocket Config ───────────────────────────────────────────────────
+// Required for compatibility in Node.js environments when using the serverless driver.
+neonConfig.webSocketConstructor = ws;
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-export const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
+let prismaInstance: PrismaClient;
+
+const isNeon = process.env.DATABASE_URL?.includes('neon.tech');
+
+if (isNeon) {
+  // Use Neon serverless driver adapter (replaces heavy native Rust query engine with WASM)
+  const pool = new Pool({ 
+    connectionString: process.env.DATABASE_URL,
+    max: process.env.NODE_ENV === 'production' ? 3 : 5
+  });
+  const adapter = new PrismaNeon(pool);
+  prismaInstance = new PrismaClient({
+    adapter,
+    log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
+  });
+} else {
+  // Fallback to standard Prisma client for local development / non-Neon DBs
+  prismaInstance = new PrismaClient({
     log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
     datasources: {
       db: {
@@ -20,6 +36,9 @@ export const prisma =
       },
     },
   });
+}
+
+export const prisma = globalForPrisma.prisma ?? prismaInstance;
 
 if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = prisma;
