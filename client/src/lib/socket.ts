@@ -3,9 +3,27 @@ import { getAccessToken } from './api';
 
 let socket: Socket | null = null;
 
+const getSocketUrl = (): string => {
+  // If explicitly configured, use it
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  // Auto-detect production backend vs local development
+  if (typeof window !== 'undefined') {
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return 'http://localhost:3001';
+    }
+    // Hardcode the deployed backend URL as fallback when hosted on Vercel
+    if (window.location.hostname.includes('vercel.app')) {
+      return 'https://stride-3rqi.onrender.com';
+    }
+  }
+  return '/';
+};
+
 export const getSocket = (): Socket => {
   if (!socket) {
-    socket = io('/', {
+    socket = io(getSocketUrl(), {
       autoConnect: false,
       withCredentials: true,
       auth: {

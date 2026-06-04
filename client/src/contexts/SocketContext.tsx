@@ -25,9 +25,20 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
 
       const onConnect = () => setIsConnected(true);
       const onDisconnect = () => setIsConnected(false);
+      const onConnectError = (err: Error) => {
+        console.error('[Socket] Connection error:', err.message);
+        if (
+          err.message.includes('Authentication required') ||
+          err.message.includes('Invalid or expired token')
+        ) {
+          console.warn('[Socket] Auth error, disconnecting socket to prevent polling flood');
+          socket.disconnect();
+        }
+      };
 
       socket.on('connect', onConnect);
       socket.on('disconnect', onDisconnect);
+      socket.on('connect_error', onConnectError);
 
       if (socket.connected) {
         setIsConnected(true);
@@ -36,6 +47,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       return () => {
         socket.off('connect', onConnect);
         socket.off('disconnect', onDisconnect);
+        socket.off('connect_error', onConnectError);
         disconnectSocket();
         setIsConnected(false);
       };
