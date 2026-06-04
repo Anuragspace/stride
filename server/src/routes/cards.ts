@@ -398,6 +398,8 @@ router.patch('/:cardId', async (req: Request, res: Response, next: NextFunction)
           _count: { select: { comments: true, subTasks: true, attachments: true } },
         },
       });
+    }, {
+      timeout: 15000,
     });
 
     // Fire-and-forget audit events (workspaceId optional — resolved async in fireEvent)

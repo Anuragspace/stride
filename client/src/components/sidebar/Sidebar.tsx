@@ -34,7 +34,6 @@ export function Sidebar({ onOpenCommandPalette, onCreateCanvas }: SidebarProps) 
 
   const navItems = [
     { id: 'home', label: 'Home', icon: <LayoutDashboard className="w-[18px] h-[18px]" />, path: '/' },
-    { id: 'chat', label: 'Chat', icon: <MessageSquare className="w-[18px] h-[18px]" />, path: '/chat' },
     { id: 'activity', label: 'Activity', icon: <Activity className="w-[18px] h-[18px]" />, path: '/activity' },
     { id: 'settings', label: 'Settings', icon: <Settings className="w-[18px] h-[18px]" />, path: '/settings' },
   ];
@@ -98,22 +97,35 @@ export function Sidebar({ onOpenCommandPalette, onCreateCanvas }: SidebarProps) 
       <div className="mx-[12px] h-[1px] bg-hairline" />
 
       {/* Canvases */}
-      <div className="flex-1 overflow-y-auto scrollbar-thin py-[8px]">
-        {!isCollapsed && (
-          <div className="flex items-center justify-between px-[20px] py-[6px]">
-            <span className="text-[11px] font-semibold text-ink-subtle uppercase tracking-wider">
-              Canvases
-            </span>
-            <button
-              onClick={onCreateCanvas}
-              className="p-[4px] rounded text-ink-subtle hover:text-ink hover:bg-white/[0.05] transition-all duration-150"
-              aria-label="Create canvas"
-            >
-              <Plus className="w-[14px] h-[14px]" />
-            </button>
-          </div>
-        )}
-        <CanvasList isCollapsed={isCollapsed} />
+      <div className="flex-1 overflow-y-auto scrollbar-thin py-[8px] flex flex-col justify-between">
+        <div>
+          {!isCollapsed && (
+            <div className="flex items-center justify-between px-[20px] py-[6px]">
+              <span className="text-[11px] font-semibold text-ink-subtle uppercase tracking-wider">
+                Canvases
+              </span>
+              <button
+                onClick={onCreateCanvas}
+                className="p-[4px] rounded text-ink-subtle hover:text-ink hover:bg-white/[0.05] transition-all duration-150"
+                aria-label="Create canvas"
+              >
+                <Plus className="w-[14px] h-[14px]" />
+              </button>
+            </div>
+          )}
+          <CanvasList isCollapsed={isCollapsed} />
+        </div>
+        
+        {/* Workspace Chat Item */}
+        <div className="px-[12px] pt-[8px] border-t border-hairline mt-[8px]">
+          <SidebarItem
+            icon={<MessageSquare className="w-[18px] h-[18px]" />}
+            label="Chat"
+            isActive={location.pathname === '/chat'}
+            isCollapsed={isCollapsed}
+            onClick={() => navigate('/chat')}
+          />
+        </div>
       </div>
 
       {/* Collapse Toggle */}
