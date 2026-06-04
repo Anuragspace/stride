@@ -4,16 +4,14 @@ import { getAccessToken } from './api';
 let socket: Socket | null = null;
 
 const getSocketUrl = (): string => {
-  // If explicitly configured, use it
   if (import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL;
   }
-  // Auto-detect production backend vs local development
   if (typeof window !== 'undefined') {
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
       return 'http://localhost:3001';
     }
-    // Hardcode the deployed backend URL as fallback when hosted on Vercel
+    // Direct connection to Render backend — bypasses Vercel proxy
     if (window.location.hostname.includes('vercel.app')) {
       return 'https://stride-3rqi.onrender.com';
     }
@@ -29,18 +27,19 @@ export const getSocket = (): Socket => {
       auth: {
         token: getAccessToken(),
       },
-      // Try WebSocket first; fall back to polling if WS is blocked
-      transports: ['websocket', 'polling'],
-      // Reconnection settings — handles Render OOM restarts gracefully
+      // WebSocket only — no HTTP polling. Server enforces this too.
+      transports: ['websocket'],
+      // Conservative reconnection: max 10 attempts with exponential backoff.
+      // Prevents flooding the server after a restart.
       reconnection: true,
-      reconnectionAttempts: Infinity,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 10000,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 2000,
+      reconnectionDelayMax: 30000,
       randomizationFactor: 0.5,
       timeout: 20000,
     });
 
-    // Refresh auth token on reconnect (token may have changed since disconnect)
+    // Refresh auth token on reconnect
     socket.on('reconnect_attempt', () => {
       if (socket && socket.auth && typeof socket.auth === 'object') {
         (socket.auth as Record<string, unknown>).token = getAccessToken();

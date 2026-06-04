@@ -21,9 +21,6 @@ import searchRoutes from './routes/search';
 import userRoutes from './routes/users';
 
 // ─── Global Error Guards ─────────────────────────────────────────────────────
-// Prevent unhandled promise rejections (e.g. from fire-and-forget DB writes)
-// from crashing the entire process and causing an OOM restart cycle.
-
 process.on('unhandledRejection', (reason: unknown) => {
   console.error('[UnhandledRejection]', reason);
 });
@@ -35,22 +32,16 @@ process.on('uncaughtException', (err: Error) => {
   }
 });
 
-// ─── Memory Watchdog ──────────────────────────────────────────────────────────
-// Render free tier limit is 512MB. If we approach it, exit cleanly so Render
-// can restart the container — far better than a hard OOM kill.
-const MEMORY_LIMIT_MB = 460; // 90% of 512MB
+// ─── Memory Monitor (logging only, no restart) ──────────────────────────────
+// Log memory every 60s so we can track trends in Render logs.
+// Do NOT call process.exit here — that creates a restart storm.
 setInterval(() => {
-  const heapMB = Math.round(process.memoryUsage().heapUsed / 1024 / 1024);
-  const rssMB = Math.round(process.memoryUsage().rss / 1024 / 1024);
-  if (rssMB > MEMORY_LIMIT_MB) {
-    console.error(`[MemoryWatchdog] RSS ${rssMB}MB exceeds limit ${MEMORY_LIMIT_MB}MB — restarting cleanly`);
-    process.exit(1); // Render will auto-restart
+  const rss = Math.round(process.memoryUsage().rss / 1024 / 1024);
+  const heap = Math.round(process.memoryUsage().heapUsed / 1024 / 1024);
+  if (rss > 400) {
+    console.warn(`[Memory] RSS=${rss}MB Heap=${heap}MB`);
   }
-  if (heapMB > 350) {
-    // Just log a warning if heap is high — helps diagnose leaks in Render logs
-    console.warn(`[MemoryWatchdog] Heap: ${heapMB}MB | RSS: ${rssMB}MB`);
-  }
-}, 30_000).unref(); // .unref() so this timer doesn't keep the process alive artificially
+}, 60_000).unref();
 
 
 // ─── App Setup ──────────────────────────────────────────────────────────────
@@ -60,17 +51,15 @@ const server = http.createServer(app);
 
 // ─── Middleware ──────────────────────────────────────────────────────────────
 
-// Support multiple CLIENT_URL values (comma-separated) for CORS
 const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
   .split(',')
   .map((o) => o.trim());
 
-// Also allow all Vercel deployment URLs automatically
 const isVercelOrigin = (origin: string) =>
   /^https:\/\/[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.vercel\.app$/.test(origin);
 
 const isAllowedOrigin = (origin: string | undefined): boolean => {
-  if (!origin) return true; // curl / health checks
+  if (!origin) return true;
   if (isVercelOrigin(origin)) return true;
   return allowedOrigins.some((o) => origin === o || origin.startsWith(o));
 };
@@ -80,46 +69,34 @@ app.use(cors({
     if (isAllowedOrigin(origin)) {
       return callback(null, true);
     }
-    console.error(`[CORS] Blocked origin: ${origin}`);
     callback(new Error(`CORS: origin ${origin} not allowed`));
   },
   credentials: true,
 }));
 
-app.use(express.json({ limit: '2mb' })); // Reduced from 10mb — no use case for 10mb JSON
+app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // ─── Root & Health ──────────────────────────────────────────────────────────
 
-// Friendly response for bare domain visits (https://stride-3rqi.onrender.com)
 app.get('/', (_req, res) => {
   res.json({
-    data: {
-      name: 'Stride API',
-      version: 'v1',
-      status: 'ok',
-      health: '/api/v1/health',
-    },
+    data: { name: 'Stride API', version: 'v1', status: 'ok' },
     error: null,
     meta: null,
   });
 });
 
-// /api/health alias for Render's UptimeRobot / health-check pings
 app.get('/api/health', (_req, res) => {
   res.json({ data: { status: 'ok', uptime: process.uptime() }, error: null, meta: null });
 });
 
 app.get('/api/v1/health', (_req, res) => {
-  const memMB = Math.round(process.memoryUsage().heapUsed / 1024 / 1024);
+  const rss = Math.round(process.memoryUsage().rss / 1024 / 1024);
+  const heap = Math.round(process.memoryUsage().heapUsed / 1024 / 1024);
   res.json({
-    data: {
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-      memoryMB: memMB,
-    },
+    data: { status: 'ok', timestamp: new Date().toISOString(), uptime: process.uptime(), rssMB: rss, heapMB: heap },
     error: null,
     meta: null,
   });
@@ -142,10 +119,7 @@ app.use('/api/v1/users', userRoutes);
 app.use((_req, res) => {
   res.status(404).json({
     data: null,
-    error: {
-      code: 'NOT_FOUND',
-      message: 'The requested endpoint does not exist',
-    },
+    error: { code: 'NOT_FOUND', message: 'The requested endpoint does not exist' },
     meta: null,
   });
 });
