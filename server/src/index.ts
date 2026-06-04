@@ -20,6 +20,23 @@ import notificationRoutes from './routes/notifications';
 import searchRoutes from './routes/search';
 import userRoutes from './routes/users';
 
+// ─── Global Error Guards ─────────────────────────────────────────────────────
+// Prevent unhandled promise rejections (e.g. from fire-and-forget DB writes)
+// from crashing the entire process and causing an OOM restart cycle.
+
+process.on('unhandledRejection', (reason: unknown) => {
+  console.error('[UnhandledRejection] Caught unhandled promise rejection:', reason);
+  // Do NOT exit — let the server keep running
+});
+
+process.on('uncaughtException', (err: Error) => {
+  console.error('[UncaughtException] Caught uncaught exception:', err.message);
+  // Only exit on truly unrecoverable errors
+  if (err.message.includes('EADDRINUSE')) {
+    process.exit(1);
+  }
+});
+
 // ─── App Setup ──────────────────────────────────────────────────────────────
 
 const app = express();
@@ -27,38 +44,56 @@ const server = http.createServer(app);
 
 // ─── Middleware ──────────────────────────────────────────────────────────────
 
+// Support multiple CLIENT_URL values (comma-separated) for CORS
+const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
+  .split(',')
+  .map((o) => o.trim());
+
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (e.g. curl, Render health checks)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.some((o) => origin.startsWith(o))) {
+      return callback(null, true);
+    }
+    callback(new Error(`CORS: origin ${origin} not allowed`));
+  },
   credentials: true,
 }));
 
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '2mb' })); // Reduced from 10mb — no use case for 10mb JSON
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Root path — friendly response for bare domain visits
+// ─── Root & Health ──────────────────────────────────────────────────────────
+
+// Friendly response for bare domain visits (https://stride-3rqi.onrender.com)
 app.get('/', (_req, res) => {
   res.json({
     data: {
       name: 'Stride API',
       version: 'v1',
       status: 'ok',
-      docs: '/api/v1/health',
+      health: '/api/v1/health',
     },
     error: null,
     meta: null,
   });
 });
 
-// Also accept /api/health as an alias (Render UptimeRobot-friendly)
-app.get('/api/health', (_req, res) => res.redirect('/api/v1/health'));
+// /api/health alias for Render's UptimeRobot / health-check pings
+app.get('/api/health', (_req, res) => {
+  res.json({ data: { status: 'ok', uptime: process.uptime() }, error: null, meta: null });
+});
 
 app.get('/api/v1/health', (_req, res) => {
+  const memMB = Math.round(process.memoryUsage().heapUsed / 1024 / 1024);
   res.json({
     data: {
       status: 'ok',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
+      memoryMB: memMB,
     },
     error: null,
     meta: null,

@@ -11,7 +11,22 @@ export const getSocket = (): Socket => {
       auth: {
         token: getAccessToken(),
       },
+      // Try WebSocket first; fall back to polling if WS is blocked
       transports: ['websocket', 'polling'],
+      // Reconnection settings — handles Render OOM restarts gracefully
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 10000,
+      randomizationFactor: 0.5,
+      timeout: 20000,
+    });
+
+    // Refresh auth token on reconnect (token may have changed since disconnect)
+    socket.on('reconnect_attempt', () => {
+      if (socket && socket.auth && typeof socket.auth === 'object') {
+        (socket.auth as Record<string, unknown>).token = getAccessToken();
+      }
     });
   }
   return socket;
