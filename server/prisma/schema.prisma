@@ -29,6 +29,7 @@ model User {
   invitesSent      Invite[]       @relation("InviteSender")
   notifications    Notification[]
   bookmarks        Bookmark[]
+  messages         Message[]
 
   @@map("users")
 }
@@ -46,6 +47,7 @@ model Workspace {
   canvases Canvas[]
   invites  Invite[]
   events   Event[]
+  messages Message[]
 
   @@map("workspaces")
 }
@@ -275,4 +277,19 @@ model Bookmark {
 
   @@unique([userId, cardId])
   @@map("bookmarks")
+}
+
+model Message {
+  id          String   @id @default(uuid())
+  workspaceId String   @map("workspace_id")
+  senderId    String   @map("sender_id")
+  content     String   @db.VarChar(2000)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  sender    User      @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([senderId])
+  @@map("messages")
 }

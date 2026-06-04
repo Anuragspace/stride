@@ -19,6 +19,7 @@ import eventRoutes from './routes/events';
 import notificationRoutes from './routes/notifications';
 import searchRoutes from './routes/search';
 import userRoutes from './routes/users';
+import messageRoutes from './routes/messages';
 
 // ─── Global Error Guards ─────────────────────────────────────────────────────
 process.on('unhandledRejection', (reason: unknown) => {
@@ -113,6 +114,7 @@ app.use('/api/v1/events', eventRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/search', searchRoutes);
 app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/messages', messageRoutes);
 
 // ─── 404 Handler ────────────────────────────────────────────────────────────
 

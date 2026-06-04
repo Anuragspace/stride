@@ -84,6 +84,23 @@ export function setupSocketIO(httpServer: HTTPServer): SocketIOServer {
       }
     });
 
+    // ─── Workspace Chat Typing Indicators ────────────────────────────────────
+    socket.on('chat:typing:start', (data: { workspaceId: string }) => {
+      if (data?.workspaceId) {
+        socket.to(`workspace:${data.workspaceId}`).emit('chat:typing:user_started', {
+          userId,
+        });
+      }
+    });
+
+    socket.on('chat:typing:stop', (data: { workspaceId: string }) => {
+      if (data?.workspaceId) {
+        socket.to(`workspace:${data.workspaceId}`).emit('chat:typing:user_stopped', {
+          userId,
+        });
+      }
+    });
+
     // ─── Disconnect ──────────────────────────────────────────────────────────
     socket.on('disconnect', () => {
       socket.rooms.forEach((room) => socket.leave(room));

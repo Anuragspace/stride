@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { LogOut, User } from 'lucide-react';
+import { LogOut, User, MessageSquare } from 'lucide-react';
 import { Sidebar } from '@/components/sidebar/Sidebar';
 import { CommandPalette } from '@/components/search/CommandPalette';
 import { CreateCanvasModal } from '@/components/board/CreateCanvasModal';
@@ -9,13 +9,16 @@ import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { Avatar } from '@/components/ui/Avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import { ChatPanel } from '@/components/chat/ChatPanel';
+import { cn } from '@/lib/utils';
 
 export function AppLayout() {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isCreateCanvasOpen, setIsCreateCanvasOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
-  const { user, logout } = useAuth();
+  const { user, logout, workspace } = useAuth();
   const navigate = useNavigate();
 
   useKeyboardShortcuts({
@@ -58,6 +61,20 @@ export function AppLayout() {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top bar */}
         <header className="h-[52px] flex items-center justify-end gap-[8px] px-[20px] border-b border-hairline flex-shrink-0">
+          {workspace && (
+            <button
+              onClick={() => setIsChatOpen((prev) => !prev)}
+              className={cn(
+                "p-[6px] rounded-lg border transition-all relative flex items-center justify-center cursor-pointer",
+                isChatOpen
+                  ? "bg-white/[0.08] border-white/[0.12] text-white"
+                  : "bg-transparent border-transparent text-[#8E929E] hover:text-white hover:bg-white/[0.04]"
+              )}
+              aria-label="Workspace chat"
+            >
+              <MessageSquare className="w-[18px] h-[18px]" />
+            </button>
+          )}
           <NotificationBell />
           <div className="relative" ref={profileMenuRef}>
             <button
@@ -149,6 +166,15 @@ export function AppLayout() {
         isOpen={isCreateCanvasOpen}
         onClose={() => setIsCreateCanvasOpen(false)}
       />
+
+      {workspace && (
+        <ChatPanel
+          isOpen={isChatOpen}
+          onClose={() => setIsChatOpen(false)}
+          workspaceId={workspace.id}
+          workspaceName={workspace.name}
+        />
+      )}
     </div>
   );
 }
