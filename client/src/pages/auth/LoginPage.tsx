@@ -50,6 +50,11 @@ export default function LoginPage() {
 
   const handleGoogleSignInCallback = async (response: any) => {
     const credential = response.credential;
+    if (!credential) {
+      console.error('[Google Sign-In] No credential in response:', response);
+      showError('Google sign in failed', 'No credential received from Google');
+      return;
+    }
     setIsLoading(true);
     try {
       const result = await googleLogin(credential, token || undefined);
@@ -66,12 +71,23 @@ export default function LoginPage() {
         navigate('/');
       }
     } catch (err: any) {
-      const message = err?.response?.data?.error?.message || 'Google authentication failed';
+      // Log the full error so we can see what's actually failing in production
+      console.error('[Google Sign-In] Auth error:', {
+        status: err?.response?.status,
+        statusText: err?.response?.statusText,
+        data: err?.response?.data,
+        message: err?.message,
+        isNetworkError: !err?.response,
+      });
+      const apiMessage = err?.response?.data?.error?.message;
+      const networkError = !err?.response ? 'Network error — could not reach the server. Check CORS or server status.' : null;
+      const message = apiMessage || networkError || err?.message || 'Google authentication failed';
       showError('Google sign in failed', message);
     } finally {
       setIsLoading(false);
     }
   };
+
 
   // Update global callback ref
   useEffect(() => {

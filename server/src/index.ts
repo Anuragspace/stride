@@ -49,13 +49,22 @@ const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
   .split(',')
   .map((o) => o.trim());
 
+// Also allow all Vercel deployment URLs automatically
+const isVercelOrigin = (origin: string) =>
+  /^https:\/\/[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.vercel\.app$/.test(origin);
+
+const isAllowedOrigin = (origin: string | undefined): boolean => {
+  if (!origin) return true; // curl / health checks
+  if (isVercelOrigin(origin)) return true;
+  return allowedOrigins.some((o) => origin === o || origin.startsWith(o));
+};
+
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (e.g. curl, Render health checks)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.some((o) => origin.startsWith(o))) {
+    if (isAllowedOrigin(origin)) {
       return callback(null, true);
     }
+    console.error(`[CORS] Blocked origin: ${origin}`);
     callback(new Error(`CORS: origin ${origin} not allowed`));
   },
   credentials: true,
