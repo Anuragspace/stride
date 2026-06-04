@@ -18,10 +18,7 @@ export function setupSocketIO(httpServer: HTTPServer): SocketIOServer {
       methods: ['GET', 'POST'],
       credentials: true,
     },
-    // WebSocket only — no HTTP long-polling fallback.
-    // The client connects directly to Render (not via Vercel proxy),
-    // so native WebSocket upgrades always succeed.
-    transports: ['websocket'],
+    transports: ['websocket', 'polling'],
     // Tight memory limits
     maxHttpBufferSize: 64 * 1024, // 64KB per message
     pingTimeout: 30000,

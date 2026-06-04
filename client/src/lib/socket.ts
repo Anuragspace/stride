@@ -27,8 +27,7 @@ export const getSocket = (): Socket => {
       auth: {
         token: getAccessToken(),
       },
-      // WebSocket only — no HTTP polling. Server enforces this too.
-      transports: ['websocket'],
+      transports: ['websocket', 'polling'],
       // Conservative reconnection: max 10 attempts with exponential backoff.
       // Prevents flooding the server after a restart.
       reconnection: true,
