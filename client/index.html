@@ -12,6 +12,12 @@
       href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&display=swap"
       rel="stylesheet"
     />
+    <!--
+      Google Identity Services script.
+      NOTE: The Cross-Origin-Opener-Policy header MUST be 'unsafe-none' on this
+      page for the GIS iframe to postMessage the credential back successfully.
+      This is configured in vercel.json and vite.config.ts.
+    -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
   </head>
   <body class="bg-canvas text-ink antialiased">
