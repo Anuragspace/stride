@@ -3,18 +3,24 @@ import { Server as SocketIOServer } from 'socket.io';
 import { verifyAccessToken } from '../lib/jwt';
 import { setSocketIO } from '../lib/events';
 
-// Allow Vercel deployment URLs + explicit CLIENT_URL
-const isAllowedSocketOrigin = (origin: string | undefined): boolean => {
-  if (!origin) return true;
-  if (/^https:\/\/[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.vercel\.app$/.test(origin)) return true;
+const checkAllowedSocketOrigin = (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+  if (!origin) {
+    callback(null, true);
+    return;
+  }
+  if (/^https:\/\/[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.vercel\.app$/.test(origin)) {
+    callback(null, true);
+    return;
+  }
   const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
-  return clientUrl.split(',').map((o) => o.trim()).some((o) => origin === o || origin.startsWith(o));
+  const allowed = clientUrl.split(',').map((o) => o.trim()).some((o) => origin === o || origin.startsWith(o));
+  callback(null, allowed);
 };
 
 export function setupSocketIO(httpServer: HTTPServer): SocketIOServer {
   const io = new SocketIOServer(httpServer, {
     cors: {
-      origin: isAllowedSocketOrigin,
+      origin: checkAllowedSocketOrigin,
       methods: ['GET', 'POST'],
       credentials: true,
     },

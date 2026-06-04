@@ -192,26 +192,6 @@ router.get('/:canvasId', async (req: Request, res: Response, next: NextFunction)
       include: {
         columns: {
           orderBy: { position: 'asc' },
-          include: {
-            cards: {
-              where: { archived: false },
-              orderBy: { position: 'asc' },
-              include: {
-                assignees: {
-                  include: {
-                    user: { select: { id: true, name: true, email: true, avatarUrl: true } },
-                  },
-                },
-                labels: true,
-                _count: { select: { comments: true, subTasks: true, attachments: true } },
-              },
-            },
-          },
-        },
-        members: {
-          include: {
-            user: { select: { id: true, name: true, email: true, avatarUrl: true } },
-          },
         },
       },
     });
