@@ -11,6 +11,7 @@ const SignupPage = lazy(() => import('@/pages/auth/SignupPage'));
 const CreateWorkspacePage = lazy(() => import('@/pages/auth/CreateWorkspacePage'));
 const HomePage = lazy(() => import('@/pages/HomePage'));
 const CanvasPage = lazy(() => import('@/pages/canvas/CanvasPage'));
+const ChatPage = lazy(() => import('@/pages/ChatPage'));
 const ActivityPage = lazy(() => import('@/pages/ActivityPage'));
 const WorkspaceSettingsPage = lazy(() => import('@/pages/settings/WorkspaceSettingsPage'));
 const ProfileSettingsPage = lazy(() => import('@/pages/settings/ProfileSettingsPage'));
@@ -116,6 +117,7 @@ export default function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/canvas/:canvasId" element={<CanvasPage />} />
             <Route path="/canvas/:canvasId/card/:cardId" element={<CanvasPage />} />
+            <Route path="/chat" element={<ChatPage />} />
             <Route path="/activity" element={<ActivityPage />} />
             <Route path="/settings" element={<WorkspaceSettingsPage />} />
             <Route path="/settings/profile" element={<ProfileSettingsPage />} />

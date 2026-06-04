@@ -8,6 +8,7 @@ import {
   ChevronsRight,
   Search,
   Plus,
+  MessageSquare,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WorkspaceSwitcher } from './WorkspaceSwitcher';
@@ -33,6 +34,7 @@ export function Sidebar({ onOpenCommandPalette, onCreateCanvas }: SidebarProps) 
 
   const navItems = [
     { id: 'home', label: 'Home', icon: <LayoutDashboard className="w-[18px] h-[18px]" />, path: '/' },
+    { id: 'chat', label: 'Chat', icon: <MessageSquare className="w-[18px] h-[18px]" />, path: '/chat' },
     { id: 'activity', label: 'Activity', icon: <Activity className="w-[18px] h-[18px]" />, path: '/activity' },
     { id: 'settings', label: 'Settings', icon: <Settings className="w-[18px] h-[18px]" />, path: '/settings' },
   ];

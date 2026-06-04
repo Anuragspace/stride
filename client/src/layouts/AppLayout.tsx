@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { LogOut, User, MessageSquare } from 'lucide-react';
 import { Sidebar } from '@/components/sidebar/Sidebar';
@@ -9,17 +9,16 @@ import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { Avatar } from '@/components/ui/Avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
-import { ChatPanel } from '@/components/chat/ChatPanel';
 import { cn } from '@/lib/utils';
 
 export function AppLayout() {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isCreateCanvasOpen, setIsCreateCanvasOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const { user, logout, workspace } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useKeyboardShortcuts({
     'mod+k': () => setIsCommandPaletteOpen(true),
@@ -63,10 +62,10 @@ export function AppLayout() {
         <header className="h-[52px] flex items-center justify-end gap-[8px] px-[20px] border-b border-hairline flex-shrink-0">
           {workspace && (
             <button
-              onClick={() => setIsChatOpen((prev) => !prev)}
+              onClick={() => navigate('/chat')}
               className={cn(
                 "p-[6px] rounded-lg border transition-all relative flex items-center justify-center cursor-pointer",
-                isChatOpen
+                location.pathname === '/chat'
                   ? "bg-white/[0.08] border-white/[0.12] text-white"
                   : "bg-transparent border-transparent text-[#8E929E] hover:text-white hover:bg-white/[0.04]"
               )}
@@ -166,15 +165,6 @@ export function AppLayout() {
         isOpen={isCreateCanvasOpen}
         onClose={() => setIsCreateCanvasOpen(false)}
       />
-
-      {workspace && (
-        <ChatPanel
-          isOpen={isChatOpen}
-          onClose={() => setIsChatOpen(false)}
-          workspaceId={workspace.id}
-          workspaceName={workspace.name}
-        />
-      )}
     </div>
   );
 }
