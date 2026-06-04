@@ -45,8 +45,8 @@ export function getSocketIO(): SocketIOServer | null {
 
 /**
  * Fire-and-forget: persist the event to DB and broadcast via Socket.io.
- * This is intentionally NON-BLOCKING so API handlers return immediately
- * after the primary DB write completes, without waiting for the audit log.
+ * NON-BLOCKING — API handlers return immediately after the primary DB write.
+ * Removed the `include: { actor }` fetch — saves one DB join per event.
  */
 export function fireEvent(data: EventData): void {
   prisma.event
@@ -59,10 +59,16 @@ export function fireEvent(data: EventData): void {
         cardId: data.cardId || null,
         metadata: data.metadata ? JSON.stringify(data.metadata) : null,
       },
-      include: {
-        actor: {
-          select: { id: true, name: true, email: true, avatarUrl: true },
-        },
+      // No include — we only need the IDs to broadcast, not the full actor object
+      select: {
+        id: true,
+        type: true,
+        actorId: true,
+        workspaceId: true,
+        canvasId: true,
+        cardId: true,
+        metadata: true,
+        createdAt: true,
       },
     })
     .then((event) => {
@@ -70,7 +76,7 @@ export function fireEvent(data: EventData): void {
 
       const payload = {
         ...event,
-        metadata: event.metadata ? JSON.parse(event.metadata) : null,
+        metadata: event.metadata ? JSON.parse(event.metadata as string) : null,
       };
 
       // Broadcast to canvas room
@@ -85,13 +91,13 @@ export function fireEvent(data: EventData): void {
     })
     .catch((err) => {
       // Never crash the server over an audit-log failure
-      console.error('[fireEvent] Failed to persist event:', err?.message ?? err);
+      console.error('[fireEvent] Failed:', err?.message ?? err);
     });
 }
 
 /**
  * Create a notification for a user and push it via Socket.io.
- * Also fire-and-forget so the caller API route returns immediately.
+ * Fire-and-forget so the caller API route returns immediately.
  */
 export function createNotification(params: {
   userId: string;
@@ -115,7 +121,7 @@ export function createNotification(params: {
       io.to(`user:${params.userId}`).emit('notification', {
         ...notification,
         metadata: notification.metadata
-          ? JSON.parse(notification.metadata)
+          ? JSON.parse(notification.metadata as string)
           : null,
       });
     })

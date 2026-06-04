@@ -51,9 +51,12 @@ export function errorHandler(
     message = 'Invalid JSON in request body';
   }
 
-  // Log all errors in development
-  if (process.env.NODE_ENV !== 'production') {
-    console.error(`[Error] ${statusCode} (${code}):`, err);
+  // Always log server errors — critical for debugging in production (Render logs)
+  if (statusCode >= 500) {
+    console.error(`[Error] ${statusCode} (${code}): ${err.message}`);
+    console.error(err.stack);
+  } else if (process.env.NODE_ENV !== 'production') {
+    console.error(`[Error] ${statusCode} (${code}):`, err.message);
     if (details) console.error('Details:', details);
   }
 

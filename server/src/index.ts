@@ -25,17 +25,33 @@ import userRoutes from './routes/users';
 // from crashing the entire process and causing an OOM restart cycle.
 
 process.on('unhandledRejection', (reason: unknown) => {
-  console.error('[UnhandledRejection] Caught unhandled promise rejection:', reason);
-  // Do NOT exit — let the server keep running
+  console.error('[UnhandledRejection]', reason);
 });
 
 process.on('uncaughtException', (err: Error) => {
-  console.error('[UncaughtException] Caught uncaught exception:', err.message);
-  // Only exit on truly unrecoverable errors
+  console.error('[UncaughtException]', err.message);
   if (err.message.includes('EADDRINUSE')) {
     process.exit(1);
   }
 });
+
+// ─── Memory Watchdog ──────────────────────────────────────────────────────────
+// Render free tier limit is 512MB. If we approach it, exit cleanly so Render
+// can restart the container — far better than a hard OOM kill.
+const MEMORY_LIMIT_MB = 460; // 90% of 512MB
+setInterval(() => {
+  const heapMB = Math.round(process.memoryUsage().heapUsed / 1024 / 1024);
+  const rssMB = Math.round(process.memoryUsage().rss / 1024 / 1024);
+  if (rssMB > MEMORY_LIMIT_MB) {
+    console.error(`[MemoryWatchdog] RSS ${rssMB}MB exceeds limit ${MEMORY_LIMIT_MB}MB — restarting cleanly`);
+    process.exit(1); // Render will auto-restart
+  }
+  if (heapMB > 350) {
+    // Just log a warning if heap is high — helps diagnose leaks in Render logs
+    console.warn(`[MemoryWatchdog] Heap: ${heapMB}MB | RSS: ${rssMB}MB`);
+  }
+}, 30_000).unref(); // .unref() so this timer doesn't keep the process alive artificially
+
 
 // ─── App Setup ──────────────────────────────────────────────────────────────
 
