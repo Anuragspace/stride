@@ -112,6 +112,7 @@ model CanvasColumn {
   canvas Canvas @relation(fields: [canvasId], references: [id], onDelete: Cascade)
   cards  Card[]
 
+  @@index([canvasId])
   @@map("canvas_columns")
 }
 
@@ -141,6 +142,8 @@ model Card {
   attachments Attachment[]
   events    Event[]
 
+  @@index([canvasId])
+  @@index([columnId])
   @@map("cards")
 }
 
@@ -154,6 +157,7 @@ model CardAssignee {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([cardId, userId])
+  @@index([userId])
   @@map("card_assignees")
 }
 
@@ -165,6 +169,7 @@ model CardLabel {
 
   card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
 
+  @@index([cardId])
   @@map("card_labels")
 }
 
@@ -178,6 +183,7 @@ model SubTask {
 
   card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
 
+  @@index([cardId])
   @@map("sub_tasks")
 }
 
@@ -195,6 +201,8 @@ model Comment {
   parent  Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
   replies Comment[] @relation("CommentReplies")
 
+  @@index([cardId])
+  @@index([parentId])
   @@map("comments")
 }
 
@@ -209,6 +217,7 @@ model Attachment {
 
   card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
 
+  @@index([cardId])
   @@map("attachments")
 }
 

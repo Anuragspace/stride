@@ -115,7 +115,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 
     // Label filter
     if (filters.label) {
-      where.labels = { some: { name: { contains: filters.label } } };
+      where.labels = { some: { name: { contains: filters.label, mode: 'insensitive' } } };
     }
 
     // Due date filters
@@ -128,8 +128,8 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     // Search
     if (filters.search) {
       where.OR = [
-        { title: { contains: filters.search } },
-        { description: { contains: filters.search } },
+        { title: { contains: filters.search, mode: 'insensitive' } },
+        { description: { contains: filters.search, mode: 'insensitive' } },
       ];
     }
 

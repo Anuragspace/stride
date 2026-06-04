@@ -32,8 +32,8 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       const cardWhere: Record<string, unknown> = {
         archived: false,
         OR: [
-          { title: { contains: q } },
-          { description: { contains: q } },
+          { title: { contains: q, mode: 'insensitive' } },
+          { description: { contains: q, mode: 'insensitive' } },
         ],
       };
 
@@ -65,8 +65,8 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       const canvasWhere: Record<string, unknown> = {
         archived: false,
         OR: [
-          { name: { contains: q } },
-          { description: { contains: q } },
+          { name: { contains: q, mode: 'insensitive' } },
+          { description: { contains: q, mode: 'insensitive' } },
         ],
       };
 
@@ -90,8 +90,8 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     if (searchType === 'all' || searchType === 'users') {
       const userWhere: Record<string, unknown> = {
         OR: [
-          { name: { contains: q } },
-          { email: { contains: q } },
+          { name: { contains: q, mode: 'insensitive' } },
+          { email: { contains: q, mode: 'insensitive' } },
         ],
       };
 
