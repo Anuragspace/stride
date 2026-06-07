@@ -38,3 +38,20 @@ server/uploads/
 
 # Coverage
 coverage/
+
+# Scratch and debug scripts
+server/*.js
+server/*.json
+!server/package.json
+!server/package-lock.json
+!server/tsconfig.json
+!server/vercel.json
+client/*.js
+client/*.json
+!client/package.json
+!client/package-lock.json
+!client/tsconfig*.json
+!client/vercel.json
+!client/postcss.config.js
+!client/tailwind.config.ts
+!client/vite.config.ts
