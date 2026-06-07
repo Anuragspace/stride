@@ -3,8 +3,30 @@ import { z } from 'zod';
 import prisma from '../lib/prisma';
 import { authenticate } from '../middleware/auth';
 import { ConflictError } from '../lib/errors';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 
 const router = Router();
+
+// Configure Multer for local uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = path.join(__dirname, '../../../uploads/avatars');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname) || '.jpg';
+    cb(null, `${req.user?.id}-${Date.now()}${ext}`);
+  },
+});
+const upload = multer({ 
+  storage, 
+  limits: { fileSize: 2 * 1024 * 1024 } // 2MB limit
+});
 
 const updateMeSchema = z.object({
   name: z.string().min(2).max(100).optional(),
@@ -13,7 +35,7 @@ const updateMeSchema = z.object({
 });
 
 // PATCH /api/v1/users/me
-router.patch('/me', authenticate, async (req: Request, res: Response, next: NextFunction) => {
+router.patch('/me', authenticate, upload.single('avatar'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user?.id;
     if (!userId) {
@@ -37,12 +59,28 @@ router.patch('/me', authenticate, async (req: Request, res: Response, next: Next
       }
     }
 
+    // Reject data URIs immediately
+    if (body.avatarUrl?.startsWith('data:')) {
+      return res.status(400).json({
+        data: null,
+        error: { code: 'BAD_REQUEST', message: 'Base64 image uploads are not supported. Use multipart/form-data.' },
+        meta: null,
+      });
+    }
+
+    let finalAvatarUrl = body.avatarUrl;
+
+    // If a file was uploaded, construct its local URL
+    if (req.file) {
+      finalAvatarUrl = `/uploads/avatars/${req.file.filename}`;
+    }
+
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: {
         ...(body.name !== undefined && { name: body.name }),
         ...(body.email !== undefined && { email: body.email }),
-        ...(body.avatarUrl !== undefined && { avatarUrl: body.avatarUrl }),
+        ...(finalAvatarUrl !== undefined && { avatarUrl: finalAvatarUrl }),
       },
       select: {
         id: true,

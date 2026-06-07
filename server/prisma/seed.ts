@@ -547,7 +547,7 @@ async function main() {
       workspaceId: workspace.id,
       canvasId: productCanvas.id,
       cardId: card4.id,
-      metadata: JSON.stringify({ title: card4.title, columnName: 'In Progress' }),
+      metadata: { title: card4.title, columnName: 'In Progress' },
       createdAt: new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000),
     },
     {
@@ -556,7 +556,7 @@ async function main() {
       workspaceId: workspace.id,
       canvasId: productCanvas.id,
       cardId: card4.id,
-      metadata: JSON.stringify({ assigneeName: 'Kamal' }),
+      metadata: { assigneeName: 'Kamal' },
       createdAt: new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000),
     },
     {
@@ -565,7 +565,7 @@ async function main() {
       workspaceId: workspace.id,
       canvasId: productCanvas.id,
       cardId: card4.id,
-      metadata: JSON.stringify({ preview: 'I\'ve started working on the Socket.io integration...' }),
+      metadata: { preview: 'I\'ve started working on the Socket.io integration...' },
       createdAt: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000),
     },
     {
@@ -574,7 +574,7 @@ async function main() {
       workspaceId: workspace.id,
       canvasId: productCanvas.id,
       cardId: card9.id,
-      metadata: JSON.stringify({ title: card9.title }),
+      metadata: { title: card9.title },
       createdAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000),
     },
     {
@@ -583,7 +583,7 @@ async function main() {
       workspaceId: workspace.id,
       canvasId: productCanvas.id,
       cardId: card10.id,
-      metadata: JSON.stringify({ title: card10.title }),
+      metadata: { title: card10.title },
       createdAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000),
     },
     {
@@ -591,7 +591,7 @@ async function main() {
       actorId: anurag.id,
       workspaceId: workspace.id,
       canvasId: productCanvas.id,
-      metadata: JSON.stringify({ canvasName: 'Product Launch v2.0' }),
+      metadata: { canvasName: 'Product Launch v2.0' },
       createdAt: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000),
     },
     {
@@ -599,21 +599,21 @@ async function main() {
       actorId: narayan.id,
       workspaceId: workspace.id,
       canvasId: designCanvas.id,
-      metadata: JSON.stringify({ canvasName: 'Design System' }),
+      metadata: { canvasName: 'Design System' },
       createdAt: new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000),
     },
     {
       type: 'member.joined',
       actorId: anurag.id,
       workspaceId: workspace.id,
-      metadata: JSON.stringify({ userName: 'Kamal' }),
+      metadata: { userName: 'Kamal' },
       createdAt: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000),
     },
     {
       type: 'member.joined',
       actorId: anurag.id,
       workspaceId: workspace.id,
-      metadata: JSON.stringify({ userName: 'Sarthak' }),
+      metadata: { userName: 'Sarthak' },
       createdAt: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000),
     },
     {
@@ -622,7 +622,7 @@ async function main() {
       workspaceId: workspace.id,
       canvasId: productCanvas.id,
       cardId: card5.id,
-      metadata: JSON.stringify({ oldStatus: 'Not Started', newStatus: 'In Progress' }),
+      metadata: { oldStatus: 'Not Started', newStatus: 'In Progress' },
       createdAt: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000),
     },
     {
@@ -631,7 +631,7 @@ async function main() {
       workspaceId: workspace.id,
       canvasId: productCanvas.id,
       cardId: card5.id,
-      metadata: JSON.stringify({ oldPriority: 'medium', newPriority: 'high' }),
+      metadata: { oldPriority: 'medium', newPriority: 'high' },
       createdAt: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000),
     },
     {
@@ -640,7 +640,7 @@ async function main() {
       workspaceId: workspace.id,
       canvasId: designCanvas.id,
       cardId: card12.id,
-      metadata: JSON.stringify({ title: card12.title, columnName: 'In Progress' }),
+      metadata: { title: card12.title, columnName: 'In Progress' },
       createdAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000),
     },
     {
@@ -649,7 +649,7 @@ async function main() {
       workspaceId: workspace.id,
       canvasId: designCanvas.id,
       cardId: card14.id,
-      metadata: JSON.stringify({ title: card14.title }),
+      metadata: { title: card14.title },
       createdAt: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000),
     },
   ];
@@ -669,7 +669,7 @@ async function main() {
         type: 'card.assigned',
         title: 'Assigned to card',
         message: 'You have been assigned to "Implement real-time notifications"',
-        metadata: JSON.stringify({ cardId: card4.id }),
+        metadata: { cardId: card4.id },
         read: true,
       },
       {
@@ -677,7 +677,7 @@ async function main() {
         type: 'comment.added',
         title: 'New comment',
         message: 'Anurag commented on "Implement real-time notifications"',
-        metadata: JSON.stringify({ cardId: card4.id }),
+        metadata: { cardId: card4.id },
         read: false,
       },
       {
@@ -685,7 +685,7 @@ async function main() {
         type: 'card.assigned',
         title: 'Assigned to card',
         message: 'You have been assigned to "Write API documentation"',
-        metadata: JSON.stringify({ cardId: card2.id }),
+        metadata: { cardId: card2.id },
         read: false,
       },
       {
@@ -693,7 +693,7 @@ async function main() {
         type: 'card.assigned',
         title: 'Assigned to card',
         message: 'You have been assigned to "Performance audit"',
-        metadata: JSON.stringify({ cardId: card3.id }),
+        metadata: { cardId: card3.id },
         read: true,
       },
     ],

@@ -94,6 +94,9 @@ const chatLimiter = rateLimit({
 
 app.use('/api/', apiLimiter);
 
+// Static uploads
+app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
+
 app.use(express.json({ limit: '128kb' })); // Reduced from 1mb to prevent OOM
 app.use(express.urlencoded({ limit: '128kb', extended: true }));
 app.use(cookieParser());

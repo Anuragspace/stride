@@ -31,8 +31,9 @@ export default function ProfileSettingsPage() {
     }
 
     try {
-      const compressedBase64 = await compressAvatar(file);
-      setAvatarPreview(compressedBase64);
+      // Create a local object URL for instant preview without base64 blocking the UI thread
+      const previewUrl = URL.createObjectURL(file);
+      setAvatarPreview(previewUrl);
     } catch (err) {
       showError('Image processing failed', 'Could not process the selected image');
     }
@@ -42,11 +43,18 @@ export default function ProfileSettingsPage() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const payload: Record<string, string> = { name, email };
-      if (avatarPreview) {
-        payload.avatarUrl = avatarPreview;
+      const form = new FormData();
+      form.append('name', name);
+      form.append('email', email);
+      
+      const file = fileInputRef.current?.files?.[0];
+      if (file) {
+        form.append('avatar', file);
       }
-      const { data } = await api.patch('/users/me', payload);
+      
+      const { data } = await api.patch('/users/me', form, { 
+        headers: { 'Content-Type': 'multipart/form-data' } 
+      });
       updateUser(data.data.user);
       setAvatarPreview(null);
       success('Profile updated');

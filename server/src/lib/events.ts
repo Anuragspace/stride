@@ -141,8 +141,12 @@ function enqueueBroadcast(room: string, payload: any) {
     setTimeout(() => {
       const batch = eventBuffer[room] || [];
       delete eventBuffer[room];
-      if (batch.length > 0) {
-        io!.to(room).emit('events:batch', batch);
+      
+      // Process in chunks of 50 to avoid exceeding 64KB WebSocket message limit
+      const MAX_BATCH_SIZE = 50;
+      for (let i = 0; i < batch.length; i += MAX_BATCH_SIZE) {
+        const chunk = batch.slice(i, i + MAX_BATCH_SIZE);
+        io!.to(room).emit('events:batch', chunk);
       }
     }, 50); // 50ms window
   }

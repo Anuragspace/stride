@@ -4,6 +4,7 @@ import prisma from '../lib/prisma';
 import { authenticate } from '../middleware/auth';
 import { NotFoundError } from '../lib/errors';
 import { fireEvent, createNotification } from '../lib/events';
+import sanitizeHtml from 'sanitize-html';
 
 const router = Router();
 
@@ -101,12 +102,24 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
       }
     }
 
+    const cleanContent = sanitizeHtml(body.content, {
+      allowedTags: ['b', 'i', 'em', 'strong', 'a', 'p', 'ul', 'li', 'br', 'span', 'div'],
+      allowedAttributes: {
+        a: ['href', 'target', 'rel'],
+        span: ['class', 'style'],
+        div: ['class', 'style']
+      },
+      transformTags: {
+        a: sanitizeHtml.simpleTransform('a', { rel: 'noopener noreferrer', target: '_blank' })
+      }
+    });
+
     const comment = await prisma.comment.create({
       data: {
         cardId: body.cardId,
         userId,
         parentId: body.parentId || null,
-        content: body.content,
+        content: cleanContent,
       },
       include: {
         user: { select: { id: true, name: true, avatarUrl: true } },
@@ -138,7 +151,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
           userId: assignee.userId,
           type: 'comment.added',
           title: 'New comment on your card',
-          message: `New comment on "${card.title}": ${body.content.substring(0, 100)}`,
+          message: `New comment on "${card.title}": ${cleanContent.replace(/<[^>]*>?/gm, '').substring(0, 100)}`,
           metadata: { cardId: card.id, commentId: comment.id },
         });
       }
@@ -177,9 +190,21 @@ router.patch('/:commentId', async (req: Request, res: Response, next: NextFuncti
       return;
     }
 
+    const cleanContent = sanitizeHtml(body.content, {
+      allowedTags: ['b', 'i', 'em', 'strong', 'a', 'p', 'ul', 'li', 'br', 'span', 'div'],
+      allowedAttributes: {
+        a: ['href', 'target', 'rel'],
+        span: ['class', 'style'],
+        div: ['class', 'style']
+      },
+      transformTags: {
+        a: sanitizeHtml.simpleTransform('a', { rel: 'noopener noreferrer', target: '_blank' })
+      }
+    });
+
     const comment = await prisma.comment.update({
       where: { id: req.params.commentId },
-      data: { content: body.content },
+      data: { content: cleanContent },
       include: {
         user: { select: { id: true, name: true, avatarUrl: true } },
         replies: {

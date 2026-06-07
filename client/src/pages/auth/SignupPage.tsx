@@ -122,18 +122,7 @@ export default function SignupPage() {
   }, [isGoogleSignup]);
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      showError('File too large', 'Please choose an image under 5MB');
-      return;
-    }
-    try {
-      const compressedBase64 = await compressAvatar(file);
-      setGoogleProfile((prev) => ({ ...prev, avatarUrl: compressedBase64 }));
-    } catch (err) {
-      showError('Image processing failed', 'Could not process the selected image');
-    }
+    showError('Not supported', 'Please set your avatar from the Profile Settings page after signup.');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

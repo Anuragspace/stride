@@ -173,15 +173,7 @@ export default function LoginPage() {
   };
 
   const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
-      setGoogleProfile((prev) => ({ ...prev, avatarUrl: dataUrl }));
-    };
-    reader.readAsDataURL(file);
+    showError('Not supported', 'Please set your avatar from the Profile Settings page after login.');
   };
 
   const handleGoogleRegisterSubmit = async (e: React.FormEvent) => {

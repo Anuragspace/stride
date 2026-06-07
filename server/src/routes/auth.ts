@@ -57,7 +57,7 @@ router.post('/signup', async (req: Request, res: Response, next: NextFunction) =
     });
 
     const tokens = generateTokenPair({ userId: user.id, email: user.email });
-    await saveRefreshToken(user.id, tokens.refreshToken);
+    await saveRefreshToken(user.id, tokens.refreshToken, req.headers['user-agent'], req.ip);
 
     // Set refresh token as httpOnly cookie
     res.cookie('refreshToken', tokens.refreshToken, {
@@ -102,7 +102,7 @@ router.post('/login', async (req: Request, res: Response, next: NextFunction) =>
     }
 
     const tokens = generateTokenPair({ userId: user.id, email: user.email });
-    await saveRefreshToken(user.id, tokens.refreshToken);
+    await saveRefreshToken(user.id, tokens.refreshToken, req.headers['user-agent'], req.ip);
 
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
@@ -157,7 +157,7 @@ router.post('/refresh', async (req: Request, res: Response, next: NextFunction) 
       throw new UnauthorizedError('No refresh token provided');
     }
 
-    const { user, accessToken, refreshToken: newRefreshToken } = await rotateRefreshToken(refreshToken);
+    const { user, accessToken, refreshToken: newRefreshToken } = await rotateRefreshToken(refreshToken, req.headers['user-agent'], req.ip);
 
     res.cookie('refreshToken', newRefreshToken, {
       httpOnly: true,
@@ -277,7 +277,7 @@ router.post('/google', async (req: Request, res: Response, next: NextFunction) =
 
       // User exists, log them in!
       const tokens = generateTokenPair({ userId: user.id, email: user.email });
-      await saveRefreshToken(user.id, tokens.refreshToken);
+      await saveRefreshToken(user.id, tokens.refreshToken, req.headers['user-agent'], req.ip);
 
       res.cookie('refreshToken', tokens.refreshToken, {
         httpOnly: true,
@@ -414,7 +414,7 @@ router.post('/google/register', async (req: Request, res: Response, next: NextFu
     }
 
     const tokens = generateTokenPair({ userId: user.id, email: user.email });
-    await saveRefreshToken(user.id, tokens.refreshToken);
+    await saveRefreshToken(user.id, tokens.refreshToken, req.headers['user-agent'], req.ip);
 
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
@@ -583,7 +583,7 @@ router.post('/invite-accept', async (req: Request, res: Response, next: NextFunc
     });
 
     const tokens = generateTokenPair({ userId: user.id, email: user.email });
-    await saveRefreshToken(user.id, tokens.refreshToken);
+    await saveRefreshToken(user.id, tokens.refreshToken, req.headers['user-agent'], req.ip);
 
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
