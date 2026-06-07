@@ -30,6 +30,7 @@ model User {
   notifications    Notification[]
   bookmarks        Bookmark[]
   messages         Message[]
+  refreshTokens    RefreshToken[]
 
   @@map("users")
 }
@@ -63,6 +64,7 @@ model WorkspaceMember {
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([workspaceId, userId])
+  @@index([userId])
   @@map("workspace_members")
 }
 
@@ -98,6 +100,7 @@ model CanvasMember {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([canvasId, userId])
+  @@index([userId])
   @@map("canvas_members")
 }
 
@@ -228,7 +231,7 @@ model Event {
   canvasId    String?  @map("canvas_id")
   cardId      String?  @map("card_id")
   actorId     String   @map("actor_id")
-  metadata    String?  // JSON string for additional data
+  metadata    Json?    // changed from String to Json
   createdAt   DateTime @default(now()) @map("created_at")
 
   workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
@@ -266,7 +269,7 @@ model Notification {
   type      String
   title     String
   message   String
-  metadata  String?  // JSON string
+  metadata  Json?    // changed from String to Json
   read      Boolean  @default(false)
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -301,4 +304,17 @@ model Message {
   @@index([workspaceId])
   @@index([senderId])
   @@map("messages")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
 }

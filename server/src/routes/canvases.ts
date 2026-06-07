@@ -65,6 +65,36 @@ const DEFAULT_COLUMNS = [
   { name: 'Done', position: 3, color: '#10B981' },
 ];
 
+// ─── Canvas Authorization Middleware ──────────────────────────────────────────
+
+const authorizeCanvasAccess = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user!.id;
+    const canvasId = req.params.canvasId;
+    
+    if (!canvasId) return next();
+
+    const canvas = await prisma.canvas.findUnique({
+      where: { id: canvasId },
+      select: { workspaceId: true },
+    });
+
+    if (!canvas) throw new NotFoundError('Canvas');
+
+    const member = await prisma.workspaceMember.findUnique({
+      where: { workspaceId_userId: { workspaceId: canvas.workspaceId, userId } },
+    });
+
+    if (!member) throw new ForbiddenError('You do not have access to this canvas');
+    
+    // Optionally attach member role to req for further checks
+    (req as any).workspaceRole = member.role;
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
 // ─── GET /api/canvases?workspaceId=xxx ──────────────────────────────────────
 
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
@@ -180,7 +210,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
 
 // ─── GET /api/canvases/:canvasId ────────────────────────────────────────────
 
-router.get('/:canvasId', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/:canvasId', authorizeCanvasAccess, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const canvas = await prisma.canvas.findUnique({
       where: { id: req.params.canvasId },
@@ -207,8 +237,12 @@ router.get('/:canvasId', async (req: Request, res: Response, next: NextFunction)
 
 // ─── PATCH /api/canvases/:canvasId ──────────────────────────────────────────
 
-router.patch('/:canvasId', async (req: Request, res: Response, next: NextFunction) => {
+router.patch('/:canvasId', authorizeCanvasAccess, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const role = (req as any).workspaceRole;
+    if (!['admin', 'manager', 'editor'].includes(role)) {
+      throw new ForbiddenError('Only editors or above can modify canvases');
+    }
     const body = updateCanvasSchema.parse(req.body);
 
     const existing = await prisma.canvas.findUnique({
@@ -244,8 +278,12 @@ router.patch('/:canvasId', async (req: Request, res: Response, next: NextFunctio
 
 // ─── POST /api/canvases/:canvasId/archive ───────────────────────────────────
 
-router.post('/:canvasId/archive', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/:canvasId/archive', authorizeCanvasAccess, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const role = (req as any).workspaceRole;
+    if (!['admin', 'manager'].includes(role)) {
+      throw new ForbiddenError('Only admins and managers can archive canvases');
+    }
     const canvas = await prisma.canvas.update({
       where: { id: req.params.canvasId },
       data: { archived: true },
@@ -271,8 +309,12 @@ router.post('/:canvasId/archive', async (req: Request, res: Response, next: Next
 
 // ─── DELETE /api/canvases/:canvasId ─────────────────────────────────────────
 
-router.delete('/:canvasId', async (req: Request, res: Response, next: NextFunction) => {
+router.delete('/:canvasId', authorizeCanvasAccess, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const role = (req as any).workspaceRole;
+    if (!['admin', 'manager'].includes(role)) {
+      throw new ForbiddenError('Only admins and managers can delete canvases');
+    }
     const canvas = await prisma.canvas.findUnique({
       where: { id: req.params.canvasId },
     });
@@ -298,8 +340,12 @@ router.delete('/:canvasId', async (req: Request, res: Response, next: NextFuncti
 // ─── Columns ────────────────────────────────────────────────────────────────
 
 // POST /api/canvases/:canvasId/columns
-router.post('/:canvasId/columns', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/:canvasId/columns', authorizeCanvasAccess, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const role = (req as any).workspaceRole;
+    if (!['admin', 'manager', 'editor'].includes(role)) {
+      throw new ForbiddenError('Only editors or above can modify columns');
+    }
     const body = createColumnSchema.parse(req.body);
 
     const canvas = await prisma.canvas.findUnique({
@@ -337,8 +383,12 @@ router.post('/:canvasId/columns', async (req: Request, res: Response, next: Next
 });
 
 // PATCH /api/canvases/:canvasId/columns/:columnId
-router.patch('/:canvasId/columns/:columnId', async (req: Request, res: Response, next: NextFunction) => {
+router.patch('/:canvasId/columns/:columnId', authorizeCanvasAccess, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const role = (req as any).workspaceRole;
+    if (!['admin', 'manager', 'editor'].includes(role)) {
+      throw new ForbiddenError('Only editors or above can modify columns');
+    }
     const body = updateColumnSchema.parse(req.body);
 
     const column = await prisma.canvasColumn.findUnique({
@@ -365,8 +415,12 @@ router.patch('/:canvasId/columns/:columnId', async (req: Request, res: Response,
 });
 
 // PUT /api/canvases/:canvasId/columns/reorder
-router.put('/:canvasId/columns/reorder', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/:canvasId/columns/reorder', authorizeCanvasAccess, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const role = (req as any).workspaceRole;
+    if (!['admin', 'manager', 'editor'].includes(role)) {
+      throw new ForbiddenError('Only editors or above can modify columns');
+    }
     const body = reorderColumnsSchema.parse(req.body);
 
     await prisma.$transaction(
@@ -394,8 +448,12 @@ router.put('/:canvasId/columns/reorder', async (req: Request, res: Response, nex
 });
 
 // DELETE /api/canvases/:canvasId/columns/:columnId
-router.delete('/:canvasId/columns/:columnId', async (req: Request, res: Response, next: NextFunction) => {
+router.delete('/:canvasId/columns/:columnId', authorizeCanvasAccess, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const role = (req as any).workspaceRole;
+    if (!['admin', 'manager', 'editor'].includes(role)) {
+      throw new ForbiddenError('Only editors or above can modify columns');
+    }
     const column = await prisma.canvasColumn.findUnique({
       where: { id: req.params.columnId },
       include: { _count: { select: { cards: true } } },

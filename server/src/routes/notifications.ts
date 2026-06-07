@@ -35,7 +35,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     // Parse metadata
     const parsed = notifications.map((n: any) => ({
       ...n,
-      metadata: n.metadata ? JSON.parse(n.metadata) : null,
+      metadata: n.metadata || null,
     }));
 
     res.json({
@@ -80,7 +80,7 @@ router.post('/:notificationId/read', async (req: Request, res: Response, next: N
       data: {
         notification: {
           ...updated,
-          metadata: updated.metadata ? JSON.parse(updated.metadata) : null,
+          metadata: updated.metadata || null,
         },
       },
       error: null,

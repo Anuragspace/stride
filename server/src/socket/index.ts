@@ -2,6 +2,7 @@ import { Server as HTTPServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import { verifyAccessToken } from '../lib/jwt';
 import { setSocketIO } from '../lib/events';
+import prisma from '../lib/prisma';
 
 const checkAllowedSocketOrigin = (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
   if (!origin) {
@@ -60,9 +61,12 @@ export function setupSocketIO(httpServer: HTTPServer): SocketIOServer {
     socket.join(`user:${userId}`);
 
     // ─── Room management ─────────────────────────────────────────────────────
-    socket.on('join:workspace', (workspaceId: string) => {
+    socket.on('join:workspace', async (workspaceId: string) => {
       if (typeof workspaceId === 'string' && workspaceId.length > 0) {
-        socket.join(`workspace:${workspaceId}`);
+        const member = await prisma.workspaceMember.findUnique({
+          where: { workspaceId_userId: { workspaceId, userId } }
+        });
+        if (member) socket.join(`workspace:${workspaceId}`);
       }
     });
 
@@ -72,9 +76,16 @@ export function setupSocketIO(httpServer: HTTPServer): SocketIOServer {
       }
     });
 
-    socket.on('join:canvas', (canvasId: string) => {
+    socket.on('join:canvas', async (canvasId: string) => {
       if (typeof canvasId === 'string' && canvasId.length > 0) {
-        socket.join(`canvas:${canvasId}`);
+        // Enforce canvas workspace membership
+        const canvas = await prisma.canvas.findUnique({ where: { id: canvasId }, select: { workspaceId: true } });
+        if (canvas) {
+          const member = await prisma.workspaceMember.findUnique({
+            where: { workspaceId_userId: { workspaceId: canvas.workspaceId, userId } }
+          });
+          if (member) socket.join(`canvas:${canvasId}`);
+        }
       }
     });
 

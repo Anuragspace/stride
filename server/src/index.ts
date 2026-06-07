@@ -82,13 +82,20 @@ app.use(compression());
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // Limit each IP to 1000 requests per window
+  max: 300, // Reduced global limit from 1000 to 300
   message: { data: null, error: { code: 'TOO_MANY_REQUESTS', message: 'Too many requests, please try again later' }, meta: null }
 });
+
+const chatLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 60, // 60 messages per minute
+  message: { data: null, error: { code: 'TOO_MANY_REQUESTS', message: 'Sending messages too quickly' }, meta: null }
+});
+
 app.use('/api/', apiLimiter);
 
-app.use(express.json({ limit: '1mb' }));
-app.use(express.urlencoded({ limit: '1mb', extended: true }));
+app.use(express.json({ limit: '128kb' })); // Reduced from 1mb to prevent OOM
+app.use(express.urlencoded({ limit: '128kb', extended: true }));
 app.use(cookieParser());
 
 // ─── Root & Health ──────────────────────────────────────────────────────────
@@ -126,7 +133,7 @@ app.use('/api/v1/events', eventRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/search', searchRoutes);
 app.use('/api/v1/users', userRoutes);
-app.use('/api/v1/messages', messageRoutes);
+app.use('/api/v1/messages', chatLimiter, messageRoutes); // Applied chat limiter here
 
 // ─── 404 Handler ────────────────────────────────────────────────────────────
 

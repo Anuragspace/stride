@@ -49,7 +49,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     // Parse metadata JSON for each event
     const eventsWithParsedMeta = events.map((event: any) => ({
       ...event,
-      metadata: event.metadata ? JSON.parse(event.metadata) : null,
+      metadata: event.metadata || null,
     }));
 
     res.json({
@@ -96,7 +96,7 @@ router.get('/workspace/:workspaceId', async (req: Request, res: Response, next: 
 
     const eventsWithParsedMeta = events.map((event: any) => ({
       ...event,
-      metadata: event.metadata ? JSON.parse(event.metadata) : null,
+      metadata: event.metadata || null,
     }));
 
     res.json({
@@ -142,7 +142,7 @@ router.get('/canvas/:canvasId', async (req: Request, res: Response, next: NextFu
 
     const eventsWithParsedMeta = events.map((event: any) => ({
       ...event,
-      metadata: event.metadata ? JSON.parse(event.metadata) : null,
+      metadata: event.metadata || null,
     }));
 
     res.json({
@@ -187,7 +187,7 @@ router.get('/card/:cardId', async (req: Request, res: Response, next: NextFuncti
 
     const eventsWithParsedMeta = events.map((event: any) => ({
       ...event,
-      metadata: event.metadata ? JSON.parse(event.metadata) : null,
+      metadata: event.metadata || null,
     }));
 
     res.json({

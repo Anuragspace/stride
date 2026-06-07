@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { Prisma } from '@prisma/client';
 import prisma from '../lib/prisma';
 import { authenticate } from '../middleware/auth';
-import { BadRequestError, NotFoundError } from '../lib/errors';
+import { BadRequestError, NotFoundError, ForbiddenError } from '../lib/errors';
 import { fireEvent, createNotification, getSocketIO } from '../lib/events';
 
 const router = Router();
@@ -94,6 +94,16 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     if (filters.columnId) where.columnId = filters.columnId;
     if (filters.priority) where.priority = filters.priority;
     if (filters.type) where.type = filters.type;
+
+    // SECURITY: Enforce that users can only see cards in workspaces they are members of
+    const userId = req.user!.id;
+    where.canvas = {
+      workspace: {
+        members: {
+          some: { userId },
+        },
+      },
+    };
 
     // Status filter
     if (filters.status === 'completed') {
@@ -225,6 +235,18 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
 
     if (!column || column.canvasId !== body.canvasId) {
       throw new BadRequestError('Column does not belong to the specified canvas');
+    }
+
+    if (!canvas) {
+      throw new BadRequestError('Canvas not found');
+    }
+
+    // SECURITY: Verify workspace membership before creating card
+    const member = await prisma.workspaceMember.findUnique({
+      where: { workspaceId_userId: { workspaceId: canvas.workspaceId, userId } }
+    });
+    if (!member) {
+      throw new ForbiddenError('You are not a member of this workspace');
     }
 
     const card = await prisma.card.create({

@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
-import { generateTokenPair, verifyRefreshToken } from '../lib/jwt';
+import { generateTokenPair, saveRefreshToken, deleteRefreshToken, rotateRefreshToken } from '../lib/jwt';
 import { BadRequestError, ConflictError, NotFoundError, UnauthorizedError } from '../lib/errors';
 import { authenticate } from '../middleware/auth';
 import { fireEvent } from '../lib/events';
@@ -57,6 +57,7 @@ router.post('/signup', async (req: Request, res: Response, next: NextFunction) =
     });
 
     const tokens = generateTokenPair({ userId: user.id, email: user.email });
+    await saveRefreshToken(user.id, tokens.refreshToken);
 
     // Set refresh token as httpOnly cookie
     res.cookie('refreshToken', tokens.refreshToken, {
@@ -101,6 +102,7 @@ router.post('/login', async (req: Request, res: Response, next: NextFunction) =>
     }
 
     const tokens = generateTokenPair({ userId: user.id, email: user.email });
+    await saveRefreshToken(user.id, tokens.refreshToken);
 
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
@@ -132,7 +134,11 @@ router.post('/login', async (req: Request, res: Response, next: NextFunction) =>
 
 // ─── POST /api/auth/logout ──────────────────────────────────────────────────
 
-router.post('/logout', (_req: Request, res: Response) => {
+router.post('/logout', async (req: Request, res: Response) => {
+  const refreshToken = req.cookies?.refreshToken;
+  if (refreshToken) {
+    await deleteRefreshToken(refreshToken);
+  }
   res.clearCookie('refreshToken', { path: '/' });
   res.json({
     data: { message: 'Logged out successfully' },
@@ -151,21 +157,9 @@ router.post('/refresh', async (req: Request, res: Response, next: NextFunction) 
       throw new UnauthorizedError('No refresh token provided');
     }
 
-    const payload = verifyRefreshToken(refreshToken);
+    const { user, accessToken, refreshToken: newRefreshToken } = await rotateRefreshToken(refreshToken);
 
-    // Check user still exists
-    const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
-      select: { id: true, email: true, name: true, avatarUrl: true, emailVerified: true },
-    });
-
-    if (!user) {
-      throw new UnauthorizedError('User no longer exists');
-    }
-
-    const tokens = generateTokenPair({ userId: user.id, email: user.email });
-
-    res.cookie('refreshToken', tokens.refreshToken, {
+    res.cookie('refreshToken', newRefreshToken, {
       httpOnly: true,
       secure: true,
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
@@ -176,7 +170,7 @@ router.post('/refresh', async (req: Request, res: Response, next: NextFunction) 
     res.json({
       data: {
         user,
-        accessToken: tokens.accessToken,
+        accessToken,
       },
       error: null,
       meta: null,
@@ -283,6 +277,7 @@ router.post('/google', async (req: Request, res: Response, next: NextFunction) =
 
       // User exists, log them in!
       const tokens = generateTokenPair({ userId: user.id, email: user.email });
+      await saveRefreshToken(user.id, tokens.refreshToken);
 
       res.cookie('refreshToken', tokens.refreshToken, {
         httpOnly: true,
@@ -419,6 +414,7 @@ router.post('/google/register', async (req: Request, res: Response, next: NextFu
     }
 
     const tokens = generateTokenPair({ userId: user.id, email: user.email });
+    await saveRefreshToken(user.id, tokens.refreshToken);
 
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
@@ -587,6 +583,7 @@ router.post('/invite-accept', async (req: Request, res: Response, next: NextFunc
     });
 
     const tokens = generateTokenPair({ userId: user.id, email: user.email });
+    await saveRefreshToken(user.id, tokens.refreshToken);
 
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,

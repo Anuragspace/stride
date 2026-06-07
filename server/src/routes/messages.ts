@@ -4,6 +4,7 @@ import prisma from '../lib/prisma';
 import { authenticate } from '../middleware/auth';
 import { BadRequestError, NotFoundError } from '../lib/errors';
 import { getSocketIO } from '../lib/events';
+import sanitizeHtml from 'sanitize-html';
 
 const router = Router();
 
@@ -100,11 +101,23 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
       return;
     }
 
+    const cleanContent = sanitizeHtml(content, {
+      allowedTags: ['b', 'i', 'em', 'strong', 'a', 'p', 'ul', 'li', 'br', 'span', 'div'],
+      allowedAttributes: {
+        a: ['href', 'target', 'rel'],
+        span: ['class', 'style'],
+        div: ['class', 'style']
+      },
+      transformTags: {
+        a: sanitizeHtml.simpleTransform('a', { rel: 'noopener noreferrer', target: '_blank' })
+      }
+    });
+
     const message = await prisma.message.create({
       data: {
         workspaceId,
         senderId: userId,
-        content,
+        content: cleanContent,
       },
       include: {
         sender: {

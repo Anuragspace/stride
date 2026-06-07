@@ -1,4 +1,5 @@
 import prisma from './prisma';
+import { Prisma } from '@prisma/client';
 import { Server as SocketIOServer } from 'socket.io';
 
 // All supported event types
@@ -57,7 +58,7 @@ export function fireEvent(data: EventData): void {
         workspaceId: data.workspaceId || null,
         canvasId: data.canvasId || null,
         cardId: data.cardId || null,
-        metadata: data.metadata ? JSON.stringify(data.metadata) : null,
+        metadata: data.metadata ? (data.metadata as Prisma.InputJsonValue) : undefined,
       },
       // No include — we only need the IDs to broadcast, not the full actor object
       select: {
@@ -76,7 +77,7 @@ export function fireEvent(data: EventData): void {
 
       const payload = {
         ...event,
-        metadata: event.metadata ? JSON.parse(event.metadata as string) : null,
+        metadata: event.metadata || null,
       };
 
       // Broadcast to canvas room
@@ -113,16 +114,14 @@ export function createNotification(params: {
         type: params.type,
         title: params.title,
         message: params.message,
-        metadata: params.metadata ? JSON.stringify(params.metadata) : null,
+        metadata: params.metadata ? (params.metadata as Prisma.InputJsonValue) : undefined,
       },
     })
     .then((notification: any) => {
       if (!io) return;
       io.to(`user:${params.userId}`).emit('notification', {
         ...notification,
-        metadata: notification.metadata
-          ? JSON.parse(notification.metadata as string)
-          : null,
+        metadata: notification.metadata || null,
       });
     })
     .catch((err: any) => {
