@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/Avatar';
 import { useToast } from '@/contexts/ToastContext';
 import api from '@/lib/api';
+import { compressAvatar } from '@/lib/image';
 
 export default function ProfileSettingsPage() {
   const { user, updateUser, logout } = useAuth();
@@ -20,20 +21,21 @@ export default function ProfileSettingsPage() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) {
-      showError('File too large', 'Please choose an image under 2MB');
+    if (file.size > 5 * 1024 * 1024) {
+      showError('File too large', 'Please choose an image under 5MB');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      setAvatarPreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    try {
+      const compressedBase64 = await compressAvatar(file);
+      setAvatarPreview(compressedBase64);
+    } catch (err) {
+      showError('Image processing failed', 'Could not process the selected image');
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {

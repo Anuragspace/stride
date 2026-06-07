@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import api from '@/lib/api';
+import { compressAvatar } from '@/lib/image';
 
 export default function SignupPage() {
   const [searchParams] = useSearchParams();
@@ -120,18 +121,19 @@ export default function SignupPage() {
     };
   }, [isGoogleSignup]);
 
-  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-      showError('File too large', 'Please choose an image under 2MB');
+    if (file.size > 5 * 1024 * 1024) {
+      showError('File too large', 'Please choose an image under 5MB');
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      setGoogleProfile((prev) => ({ ...prev, avatarUrl: reader.result as string }));
-    };
-    reader.readAsDataURL(file);
+    try {
+      const compressedBase64 = await compressAvatar(file);
+      setGoogleProfile((prev) => ({ ...prev, avatarUrl: compressedBase64 }));
+    } catch (err) {
+      showError('Image processing failed', 'Could not process the selected image');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
