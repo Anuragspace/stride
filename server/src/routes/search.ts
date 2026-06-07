@@ -44,14 +44,10 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       const cards = await prisma.card.findMany({
         where: cardWhere,
         include: {
-          column: { select: { id: true, name: true, color: true } },
-          canvas: { select: { id: true, name: true, workspaceId: true } },
-          assignees: {
-            include: {
-              user: { select: { id: true, name: true, avatarUrl: true } },
-            },
-          },
-          labels: true,
+          column: { select: { id: true, name: true } },
+          canvas: { select: { id: true, name: true } },
+          assignees: { select: { userId: true } },
+          _count: { select: { comments: true, subTasks: true, attachments: true } },
         },
         take: limit,
         orderBy: { updatedAt: 'desc' },
@@ -104,8 +100,6 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         select: {
           id: true,
           name: true,
-          email: true,
-          avatarUrl: true,
         },
         take: limit,
       });

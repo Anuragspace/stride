@@ -179,7 +179,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
               cardId: true,
               userId: true,
               assignedAt: true,
-              user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+              user: { select: { id: true, name: true, avatarUrl: true } },
             },
           },
           labels: true,
@@ -270,7 +270,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
         column: { select: { id: true, name: true, color: true } },
         assignees: {
           include: {
-            user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+            user: { select: { id: true, name: true, avatarUrl: true } },
           },
         },
         labels: true,
@@ -330,7 +330,7 @@ router.get('/:cardId', async (req: Request, res: Response, next: NextFunction) =
         canvas: { select: { id: true, name: true, workspaceId: true } },
         assignees: {
           include: {
-            user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+            user: { select: { id: true, name: true, avatarUrl: true } },
           },
         },
         labels: true,
@@ -339,11 +339,11 @@ router.get('/:cardId', async (req: Request, res: Response, next: NextFunction) =
           where: { parentId: null },
           take: 5,
           include: {
-            user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+            user: { select: { id: true, name: true, avatarUrl: true } },
             replies: {
               take: 5,
               include: {
-                user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+                user: { select: { id: true, name: true, avatarUrl: true } },
               },
               orderBy: { createdAt: 'asc' },
             },
@@ -433,7 +433,7 @@ router.patch('/:cardId', async (req: Request, res: Response, next: NextFunction)
         column: { select: { id: true, name: true, color: true } },
         assignees: {
           include: {
-            user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+            user: { select: { id: true, name: true, avatarUrl: true } },
           },
         },
         labels: true,
@@ -526,7 +526,7 @@ router.post('/reorder', async (req: Request, res: Response, next: NextFunction) 
                 cardId: true,
                 userId: true,
                 assignedAt: true,
-                user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+                user: { select: { id: true, name: true, avatarUrl: true } },
               },
             },
             labels: true,
@@ -596,7 +596,7 @@ router.post('/:cardId/move', async (req: Request, res: Response, next: NextFunct
         column: { select: { id: true, name: true, color: true } },
         assignees: {
           include: {
-            user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+            user: { select: { id: true, name: true, avatarUrl: true } },
           },
         },
         labels: true,
@@ -668,7 +668,7 @@ router.post('/:cardId/complete', async (req: Request, res: Response, next: NextF
         column: { select: { id: true, name: true, color: true } },
         assignees: {
           include: {
-            user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+            user: { select: { id: true, name: true, avatarUrl: true } },
           },
         },
         labels: true,
@@ -742,7 +742,7 @@ router.post('/:cardId/reopen', async (req: Request, res: Response, next: NextFun
         column: { select: { id: true, name: true, color: true } },
         assignees: {
           include: {
-            user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+            user: { select: { id: true, name: true, avatarUrl: true } },
           },
         },
         labels: true,
@@ -910,7 +910,7 @@ router.post('/:cardId/assignees', async (req: Request, res: Response, next: Next
         userId: assigneeId,
       },
       include: {
-        user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+        user: { select: { id: true, name: true, avatarUrl: true } },
       },
     });
 

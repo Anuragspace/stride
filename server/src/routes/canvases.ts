@@ -184,7 +184,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
         columns: { orderBy: { position: 'asc' } },
         members: {
           include: {
-            user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+            user: { select: { id: true, name: true, avatarUrl: true } },
           },
         },
       },
@@ -260,7 +260,7 @@ router.patch('/:canvasId', authorizeCanvasAccess, async (req: Request, res: Resp
         columns: { orderBy: { position: 'asc' } },
         members: {
           include: {
-            user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+            user: { select: { id: true, name: true, avatarUrl: true } },
           },
         },
       },
@@ -489,7 +489,7 @@ router.get('/:canvasId/members', async (req: Request, res: Response, next: NextF
     const members = await prisma.canvasMember.findMany({
       where: { canvasId: req.params.canvasId },
       include: {
-        user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+        user: { select: { id: true, name: true, avatarUrl: true } },
       },
       orderBy: { joinedAt: 'asc' },
     });
@@ -534,7 +534,7 @@ router.post('/:canvasId/members', async (req: Request, res: Response, next: Next
         role: body.role,
       },
       include: {
-        user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+        user: { select: { id: true, name: true, avatarUrl: true } },
       },
     });
 

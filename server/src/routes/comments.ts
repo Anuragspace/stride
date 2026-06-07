@@ -46,11 +46,11 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         parentId: null, // Top-level comments only
       },
       include: {
-        user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+        user: { select: { id: true, name: true, avatarUrl: true } },
         replies: {
           take: 10, // Limit nested replies
           include: {
-            user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+            user: { select: { id: true, name: true, avatarUrl: true } },
           },
           orderBy: { createdAt: 'asc' },
         },
@@ -109,10 +109,10 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
         content: body.content,
       },
       include: {
-        user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+        user: { select: { id: true, name: true, avatarUrl: true } },
         replies: {
           include: {
-            user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+            user: { select: { id: true, name: true, avatarUrl: true } },
           },
         },
       },
@@ -181,10 +181,10 @@ router.patch('/:commentId', async (req: Request, res: Response, next: NextFuncti
       where: { id: req.params.commentId },
       data: { content: body.content },
       include: {
-        user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+        user: { select: { id: true, name: true, avatarUrl: true } },
         replies: {
           include: {
-            user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+            user: { select: { id: true, name: true, avatarUrl: true } },
           },
         },
       },

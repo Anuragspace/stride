@@ -35,7 +35,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       prisma.event.findMany({
         where,
         include: {
-          actor: { select: { id: true, name: true, email: true, avatarUrl: true } },
+          actor: { select: { id: true, name: true, avatarUrl: true } },
           canvas: { select: { id: true, name: true } },
           card: { select: { id: true, title: true } },
         },
@@ -83,7 +83,7 @@ router.get('/workspace/:workspaceId', async (req: Request, res: Response, next: 
       prisma.event.findMany({
         where,
         include: {
-          actor: { select: { id: true, name: true, email: true, avatarUrl: true } },
+          actor: { select: { id: true, name: true, avatarUrl: true } },
           canvas: { select: { id: true, name: true } },
           card: { select: { id: true, title: true } },
         },
@@ -130,7 +130,7 @@ router.get('/canvas/:canvasId', async (req: Request, res: Response, next: NextFu
       prisma.event.findMany({
         where,
         include: {
-          actor: { select: { id: true, name: true, email: true, avatarUrl: true } },
+          actor: { select: { id: true, name: true, avatarUrl: true } },
           card: { select: { id: true, title: true } },
         },
         orderBy: { createdAt: 'desc' },
@@ -176,7 +176,7 @@ router.get('/card/:cardId', async (req: Request, res: Response, next: NextFuncti
       prisma.event.findMany({
         where,
         include: {
-          actor: { select: { id: true, name: true, email: true, avatarUrl: true } },
+          actor: { select: { id: true, name: true, avatarUrl: true } },
         },
         orderBy: { createdAt: 'desc' },
         skip,

@@ -80,14 +80,13 @@ export function fireEvent(data: EventData): void {
         metadata: event.metadata || null,
       };
 
-      // Broadcast to canvas room
+      // Use micro-batching to prevent broadcast storms
       if (data.canvasId) {
-        io.to(`canvas:${data.canvasId}`).emit('event', payload);
+        enqueueBroadcast(`canvas:${data.canvasId}`, payload);
       }
 
-      // Broadcast to workspace room
       if (data.workspaceId) {
-        io.to(`workspace:${data.workspaceId}`).emit('event', payload);
+        enqueueBroadcast(`workspace:${data.workspaceId}`, payload);
       }
     })
     .catch((err: any) => {
@@ -127,4 +126,24 @@ export function createNotification(params: {
     .catch((err: any) => {
       console.error('[createNotification] Failed:', err?.message ?? err);
     });
+}
+
+// Simple debounce + batch emitter for Socket.IO
+const eventBuffer: Record<string, any[]> = {};
+
+function enqueueBroadcast(room: string, payload: any) {
+  if (!io) return;
+  eventBuffer[room] ??= [];
+  eventBuffer[room].push(payload);
+  
+  if (eventBuffer[room].length === 1) {
+    // schedule a micro-batch send
+    setTimeout(() => {
+      const batch = eventBuffer[room] || [];
+      delete eventBuffer[room];
+      if (batch.length > 0) {
+        io!.to(room).emit('events:batch', batch);
+      }
+    }, 50); // 50ms window
+  }
 }

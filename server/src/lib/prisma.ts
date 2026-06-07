@@ -12,8 +12,9 @@ const getDatabaseUrl = () => {
   const url = process.env.DATABASE_URL;
   if (!url) return url;
   if (url.includes('connection_limit=')) return url;
+  const limit = process.env.PRISMA_CONNECTION_LIMIT ?? '4';
   const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}connection_limit=2`;
+  return `${url}${separator}connection_limit=${limit}`;
 };
 
 export const prisma =

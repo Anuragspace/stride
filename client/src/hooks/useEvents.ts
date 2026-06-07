@@ -105,6 +105,7 @@ export function useEvents(canvasIdOrParams?: string | { canvasId?: string; cardI
     };
 
     socket.on('event', handleNewEvent);
+    socket.on('events:batch', (batch: any[]) => batch.forEach(handleNewEvent));
 
     return () => {
       if (canvasId) {
@@ -113,6 +114,7 @@ export function useEvents(canvasIdOrParams?: string | { canvasId?: string; cardI
         socket.emit('leave:workspace', workspaceId);
       }
       socket.off('event', handleNewEvent);
+      socket.off('events:batch');
     };
   }, [socket, isConnected, canvasId, workspaceId, cardId, queryKey, queryClient, isCardDraft]);
 

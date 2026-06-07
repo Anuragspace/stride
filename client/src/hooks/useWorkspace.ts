@@ -51,10 +51,12 @@ export function useWorkspace() {
     };
 
     socket.on('event', handleWorkspaceEvent);
+    socket.on('events:batch', (batch: any[]) => batch.forEach(handleWorkspaceEvent));
 
     return () => {
       socket.emit('leave:workspace', workspaceId);
       socket.off('event', handleWorkspaceEvent);
+      socket.off('events:batch');
     };
   }, [socket, isConnected, workspaceId, queryClient]);
 
