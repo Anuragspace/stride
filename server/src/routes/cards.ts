@@ -406,43 +406,43 @@ router.patch('/:cardId', async (req: Request, res: Response, next: NextFunction)
         .filter(Boolean) as { name: string; color: string }[];
     }
 
-    // Single transaction — no pre-fetch needed; events use card.canvasId from result
-    const card = await prisma.$transaction(async (tx: any) => {
-      if (targetAssigneeIds !== undefined) {
-        await tx.cardAssignee.deleteMany({ where: { cardId } });
-      }
-      if (targetLabels !== undefined) {
-        await tx.cardLabel.deleteMany({ where: { cardId } });
-      }
+    // Sequential transaction — no pre-fetch needed; events use card.canvasId from result
+    const operations: any[] = [];
+    if (targetAssigneeIds !== undefined) {
+      operations.push(prisma.cardAssignee.deleteMany({ where: { cardId } }));
+    }
+    if (targetLabels !== undefined) {
+      operations.push(prisma.cardLabel.deleteMany({ where: { cardId } }));
+    }
 
-      return tx.card.update({
-        where: { id: cardId },
-        data: {
-          ...rest,
-          dueDate: rest.dueDate !== undefined
-            ? (rest.dueDate ? new Date(rest.dueDate) : null)
-            : undefined,
-          assignees: targetAssigneeIds !== undefined
-            ? { create: targetAssigneeIds.map((uid) => ({ userId: uid })) }
-            : undefined,
-          labels: targetLabels !== undefined
-            ? { create: targetLabels }
-            : undefined,
-        },
-        include: {
-          column: { select: { id: true, name: true, color: true } },
-          assignees: {
-            include: {
-              user: { select: { id: true, name: true, email: true, avatarUrl: true } },
-            },
+    operations.push(prisma.card.update({
+      where: { id: cardId },
+      data: {
+        ...rest,
+        dueDate: rest.dueDate !== undefined
+          ? (rest.dueDate ? new Date(rest.dueDate) : null)
+          : undefined,
+        assignees: targetAssigneeIds !== undefined
+          ? { create: targetAssigneeIds.map((uid) => ({ userId: uid })) }
+          : undefined,
+        labels: targetLabels !== undefined
+          ? { create: targetLabels }
+          : undefined,
+      },
+      include: {
+        column: { select: { id: true, name: true, color: true } },
+        assignees: {
+          include: {
+            user: { select: { id: true, name: true, email: true, avatarUrl: true } },
           },
-          labels: true,
-          _count: { select: { comments: true, subTasks: true, attachments: true } },
         },
-      });
-    }, {
-      timeout: 15000,
-    });
+        labels: true,
+        _count: { select: { comments: true, subTasks: true, attachments: true } },
+      },
+    }));
+
+    const results = await prisma.$transaction(operations);
+    const card = results[results.length - 1];
 
     // Fire-and-forget audit events (workspaceId optional — resolved async in fireEvent)
     if (rest.priority) {
