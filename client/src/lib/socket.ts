@@ -13,7 +13,7 @@ const getSocketUrl = (): string => {
     }
     // Direct connection to Render backend — bypasses Vercel proxy
     if (window.location.hostname.includes('vercel.app')) {
-      return 'https://stride-3rqi.onrender.com';
+      return 'https://stride-e72v.onrender.com';
     }
   }
   return '/';
