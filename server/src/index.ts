@@ -50,6 +50,7 @@ setInterval(() => {
 // ─── App Setup ──────────────────────────────────────────────────────────────
 
 const app = express();
+app.set('trust proxy', 1);
 const server = http.createServer(app);
 
 // ─── Middleware ──────────────────────────────────────────────────────────────

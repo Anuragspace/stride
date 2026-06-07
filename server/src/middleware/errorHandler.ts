@@ -49,6 +49,10 @@ export function errorHandler(
     statusCode = 400;
     code = 'INVALID_JSON';
     message = 'Invalid JSON in request body';
+  } else if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError' || err.name === 'NotBeforeError') {
+    statusCode = 401;
+    code = 'UNAUTHORIZED';
+    message = 'Invalid or expired token';
   }
 
   // Always log server errors — critical for debugging in production (Render logs)
