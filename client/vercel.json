@@ -17,11 +17,11 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://stride-3rqi.onrender.com/api/:path*"
+      "destination": "https://stride-e72v.onrender.com/api/:path*"
     },
     {
       "source": "/socket.io/:path*",
-      "destination": "https://stride-3rqi.onrender.com/socket.io/:path*"
+      "destination": "https://stride-e72v.onrender.com/socket.io/:path*"
     },
     {
       "source": "/(.*)",
