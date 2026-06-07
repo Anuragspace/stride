@@ -46,11 +46,7 @@ export function useChat(workspaceId: string) {
     enabled: !!workspaceId,
   });
 
-  // Helper: Resolve User Name from cached members list
-  const resolveMemberName = (userId: string): string => {
-    const member = members.find((m) => m.userId === userId);
-    return member?.user?.name || 'Someone';
-  };
+  // Removed resolveMemberName to prevent stale closures
 
   // 2. Mutation to send message
   const sendMutation = useMutation({
@@ -151,7 +147,10 @@ export function useChat(workspaceId: string) {
 
     // Listen for typing indicators
     const handleUserStartedTyping = ({ userId }: { userId: string }) => {
-      const name = resolveMemberName(userId);
+      const currentMembers = queryClient.getQueryData<any[]>(['workspace-members', workspaceId]) || [];
+      const member = currentMembers.find((m) => m.userId === userId);
+      const name = member?.user?.name || 'Someone';
+
       setTypingUsers((prev) => {
         if (prev.some((u) => u.id === userId)) return prev;
         return [...prev, { id: userId, name }];
@@ -190,7 +189,7 @@ export function useChat(workspaceId: string) {
       // Clean up typing timeouts
       Object.values(typingTimeouts.current).forEach(clearTimeout);
     };
-  }, [socket, isConnected, workspaceId, queryClient, members]);
+  }, [socket, isConnected, workspaceId, queryClient]);
 
   // 5. Typing emission handlers
   const emitStartTyping = () => {

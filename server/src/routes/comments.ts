@@ -36,6 +36,10 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       return;
     }
 
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const skip = (page - 1) * limit;
+
     const comments = await prisma.comment.findMany({
       where: {
         cardId,
@@ -44,6 +48,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       include: {
         user: { select: { id: true, name: true, email: true, avatarUrl: true } },
         replies: {
+          take: 10, // Limit nested replies
           include: {
             user: { select: { id: true, name: true, email: true, avatarUrl: true } },
           },
@@ -51,14 +56,16 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         },
       },
       orderBy: { createdAt: 'desc' },
+      skip,
+      take: limit,
     });
 
-    const total = await prisma.comment.count({ where: { cardId } });
+    const total = await prisma.comment.count({ where: { cardId, parentId: null } });
 
     res.json({
       data: { comments },
       error: null,
-      meta: { total },
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
     });
   } catch (error) {
     next(error);

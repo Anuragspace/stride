@@ -6,6 +6,8 @@ import express from 'express';
 import http from 'http';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import compression from 'compression';
+import rateLimit from 'express-rate-limit';
 import { errorHandler } from './middleware/errorHandler';
 import { setupSocketIO } from './socket';
 
@@ -75,8 +77,17 @@ app.use(cors({
   credentials: true,
 }));
 
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use(compression());
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 1000, // Limit each IP to 1000 requests per window
+  message: { data: null, error: { code: 'TOO_MANY_REQUESTS', message: 'Too many requests, please try again later' }, meta: null }
+});
+app.use('/api/', apiLimiter);
+
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ limit: '2mb', extended: true }));
 app.use(cookieParser());
 
 // ─── Root & Health ──────────────────────────────────────────────────────────

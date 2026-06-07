@@ -21,6 +21,19 @@ interface AuthContextValue extends AuthState {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+const fetchDefaultWorkspace = async (): Promise<Workspace | null> => {
+  try {
+    const wsResponse = await api.get('/workspaces');
+    const workspaces = wsResponse.data.data?.workspaces;
+    if (workspaces && workspaces.length > 0) {
+      return workspaces[0];
+    }
+  } catch {
+    // No workspaces yet
+  }
+  return null;
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AuthState>({
     user: null,
@@ -37,17 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { user, accessToken } = response.data.data;
         setAccessToken(accessToken);
 
-        // Fetch user's workspaces
-        let workspace: Workspace | null = null;
-        try {
-          const wsResponse = await api.get('/workspaces');
-          const workspaces = wsResponse.data.data?.workspaces;
-          if (workspaces && workspaces.length > 0) {
-            workspace = workspaces[0];
-          }
-        } catch {
-          // No workspaces yet
-        }
+        const workspace = await fetchDefaultWorkspace();
 
         setState({
           user,
@@ -67,17 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { user, accessToken } = response.data.data;
     setAccessToken(accessToken);
 
-    // Fetch user's workspaces
-    let workspace: Workspace | null = null;
-    try {
-      const wsResponse = await api.get('/workspaces');
-      const workspaces = wsResponse.data.data?.workspaces;
-      if (workspaces && workspaces.length > 0) {
-        workspace = workspaces[0];
-      }
-    } catch {
-      // No workspaces yet
-    }
+    const workspace = await fetchDefaultWorkspace();
 
     setState({
       user,
@@ -130,17 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { user, accessToken } = response.data.data;
       setAccessToken(accessToken);
 
-      // Fetch user's workspaces
-      let workspace: Workspace | null = null;
-      try {
-        const wsResponse = await api.get('/workspaces');
-        const workspaces = wsResponse.data.data?.workspaces;
-        if (workspaces && workspaces.length > 0) {
-          workspace = workspaces[0];
-        }
-      } catch {
-        // No workspaces yet
-      }
+      const workspace = await fetchDefaultWorkspace();
 
       setState({
         user,
@@ -158,16 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { user, accessToken } = response.data.data;
     setAccessToken(accessToken);
 
-    let workspace: Workspace | null = null;
-    try {
-      const wsResponse = await api.get('/workspaces');
-      const workspaces = wsResponse.data.data?.workspaces;
-      if (workspaces && workspaces.length > 0) {
-        workspace = workspaces[0];
-      }
-    } catch {
-      // No workspaces yet
-    }
+    const workspace = await fetchDefaultWorkspace();
 
     setState({
       user,

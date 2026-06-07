@@ -46,12 +46,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         members: { some: { userId } },
       },
       include: {
-        members: {
-          include: {
-            user: { select: { id: true, name: true, email: true, avatarUrl: true } },
-          },
-        },
-        _count: { select: { canvases: true } },
+        _count: { select: { canvases: true, members: true } },
       },
       orderBy: { createdAt: 'desc' },
     });

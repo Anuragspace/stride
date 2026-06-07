@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -50,11 +50,13 @@ export function useEvents(canvasIdOrParams?: string | { canvasId?: string; cardI
 
   const isCardDraft = cardId === 'new';
 
-  const queryKey = cardId && !isCardDraft
-    ? ['events', 'card', cardId]
-    : canvasId
-    ? ['events', 'canvas', canvasId]
-    : ['events', 'workspace', workspaceId];
+  const queryKey = React.useMemo(() => {
+    return cardId && !isCardDraft
+      ? ['events', 'card', cardId]
+      : canvasId
+      ? ['events', 'canvas', canvasId]
+      : ['events', 'workspace', workspaceId];
+  }, [cardId, isCardDraft, canvasId, workspaceId]);
 
   const { data: events, isLoading } = useQuery({
     queryKey,

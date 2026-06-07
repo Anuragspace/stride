@@ -297,9 +297,11 @@ router.get('/:cardId', async (req: Request, res: Response, next: NextFunction) =
         subTasks: { orderBy: { position: 'asc' } },
         comments: {
           where: { parentId: null },
+          take: 5,
           include: {
             user: { select: { id: true, name: true, email: true, avatarUrl: true } },
             replies: {
+              take: 5,
               include: {
                 user: { select: { id: true, name: true, email: true, avatarUrl: true } },
               },
