@@ -33,7 +33,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     ]);
 
     // Parse metadata
-    const parsed = notifications.map((n) => ({
+    const parsed = notifications.map((n: any) => ({
       ...n,
       metadata: n.metadata ? JSON.parse(n.metadata) : null,
     }));

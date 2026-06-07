@@ -71,7 +71,7 @@ export function fireEvent(data: EventData): void {
         createdAt: true,
       },
     })
-    .then((event) => {
+    .then((event: any) => {
       if (!io) return;
 
       const payload = {
@@ -89,7 +89,7 @@ export function fireEvent(data: EventData): void {
         io.to(`workspace:${data.workspaceId}`).emit('event', payload);
       }
     })
-    .catch((err) => {
+    .catch((err: any) => {
       // Never crash the server over an audit-log failure
       console.error('[fireEvent] Failed:', err?.message ?? err);
     });
@@ -116,7 +116,7 @@ export function createNotification(params: {
         metadata: params.metadata ? JSON.stringify(params.metadata) : null,
       },
     })
-    .then((notification) => {
+    .then((notification: any) => {
       if (!io) return;
       io.to(`user:${params.userId}`).emit('notification', {
         ...notification,
@@ -125,7 +125,7 @@ export function createNotification(params: {
           : null,
       });
     })
-    .catch((err) => {
+    .catch((err: any) => {
       console.error('[createNotification] Failed:', err?.message ?? err);
     });
 }

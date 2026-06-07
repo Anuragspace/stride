@@ -88,7 +88,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const filters = filterSchema.parse(req.query);
 
-    const where: Prisma.CardWhereInput = {};
+    const where: any = {};
 
     if (filters.canvasId) where.canvasId = filters.canvasId;
     if (filters.columnId) where.columnId = filters.columnId;
@@ -134,7 +134,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     }
 
     // Build orderBy
-    let orderBy: Prisma.CardOrderByWithRelationInput = {};
+    let orderBy: any = {};
     if (filters.sortBy === 'priority') {
       // Priority sort is handled post-query since it's an enum
       orderBy = { createdAt: filters.sortOrder };
@@ -367,7 +367,7 @@ router.patch('/:cardId', async (req: Request, res: Response, next: NextFunction)
     }
 
     // Single transaction — no pre-fetch needed; events use card.canvasId from result
-    const card = await prisma.$transaction(async (tx) => {
+    const card = await prisma.$transaction(async (tx: any) => {
       if (targetAssigneeIds !== undefined) {
         await tx.cardAssignee.deleteMany({ where: { cardId } });
       }

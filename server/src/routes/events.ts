@@ -47,7 +47,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     ]);
 
     // Parse metadata JSON for each event
-    const eventsWithParsedMeta = events.map((event) => ({
+    const eventsWithParsedMeta = events.map((event: any) => ({
       ...event,
       metadata: event.metadata ? JSON.parse(event.metadata) : null,
     }));
@@ -94,7 +94,7 @@ router.get('/workspace/:workspaceId', async (req: Request, res: Response, next: 
       prisma.event.count({ where }),
     ]);
 
-    const eventsWithParsedMeta = events.map((event) => ({
+    const eventsWithParsedMeta = events.map((event: any) => ({
       ...event,
       metadata: event.metadata ? JSON.parse(event.metadata) : null,
     }));
@@ -140,7 +140,7 @@ router.get('/canvas/:canvasId', async (req: Request, res: Response, next: NextFu
       prisma.event.count({ where }),
     ]);
 
-    const eventsWithParsedMeta = events.map((event) => ({
+    const eventsWithParsedMeta = events.map((event: any) => ({
       ...event,
       metadata: event.metadata ? JSON.parse(event.metadata) : null,
     }));
@@ -185,7 +185,7 @@ router.get('/card/:cardId', async (req: Request, res: Response, next: NextFuncti
       prisma.event.count({ where }),
     ]);
 
-    const eventsWithParsedMeta = events.map((event) => ({
+    const eventsWithParsedMeta = events.map((event: any) => ({
       ...event,
       metadata: event.metadata ? JSON.parse(event.metadata) : null,
     }));
