@@ -49,6 +49,10 @@ export function errorHandler(
     statusCode = 400;
     code = 'INVALID_JSON';
     message = 'Invalid JSON in request body';
+  } else if (err.name === 'PayloadTooLargeError' || (err as any).type === 'entity.too.large') {
+    statusCode = 413;
+    code = 'PAYLOAD_TOO_LARGE';
+    message = 'The request payload is too large';
   } else if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError' || err.name === 'NotBeforeError') {
     statusCode = 401;
     code = 'UNAUTHORIZED';
