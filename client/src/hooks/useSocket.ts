@@ -41,6 +41,10 @@ export function useSocket(canvasId?: string) {
         if (!old.some((c) => c.id === card.id)) return [...old, card];
         return old.map((c) => (c.id === card.id ? card : c));
       });
+      // Also update individual card cache if it exists
+      if (queryClient.getQueryData(['card', card.id])) {
+        queryClient.setQueryData(['card', card.id], card);
+      }
     };
 
     const handleCardDeleted = ({ cardId }: { cardId: string }) => {

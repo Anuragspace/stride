@@ -147,10 +147,28 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     const [cards, total] = await Promise.all([
       prisma.card.findMany({
         where,
-        include: {
+        select: {
+          id: true,
+          canvasId: true,
+          columnId: true,
+          title: true,
+          type: true,
+          priority: true,
+          position: true,
+          dueDate: true,
+          completed: true,
+          completedAt: true,
+          archived: true,
+          archivedAt: true,
+          createdAt: true,
+          updatedAt: true,
           column: { select: { id: true, name: true, color: true } },
           assignees: {
-            include: {
+            select: {
+              id: true,
+              cardId: true,
+              userId: true,
+              assignedAt: true,
               user: { select: { id: true, name: true, email: true, avatarUrl: true } },
             },
           },
@@ -464,10 +482,28 @@ router.post('/reorder', async (req: Request, res: Response, next: NextFunction) 
               create: u.assigneeIds.map(uid => ({ userId: uid })),
             } : undefined,
           },
-          include: {
+          select: {
+            id: true,
+            canvasId: true,
+            columnId: true,
+            title: true,
+            type: true,
+            priority: true,
+            position: true,
+            dueDate: true,
+            completed: true,
+            completedAt: true,
+            archived: true,
+            archivedAt: true,
+            createdAt: true,
+            updatedAt: true,
             column: { select: { id: true, name: true, color: true } },
             assignees: {
-              include: {
+              select: {
+                id: true,
+                cardId: true,
+                userId: true,
+                assignedAt: true,
                 user: { select: { id: true, name: true, email: true, avatarUrl: true } },
               },
             },

@@ -96,6 +96,17 @@ function useCanvasColumns(canvasId: string) {
     gcTime: 1000 * 60 * 30,   // keep in cache 30 minutes
   });
 }
+export function useCard(cardId: string | null) {
+  return useQuery({
+    queryKey: ['card', cardId],
+    queryFn: async () => {
+      if (!cardId || cardId === 'new') return null;
+      const { data } = await api.get(`/cards/${cardId}`);
+      return mapCardFromServer(data.data.card);
+    },
+    enabled: !!cardId && cardId !== 'new',
+  });
+}
 
 export function useCards(canvasId: string) {
   const queryClient = useQueryClient();

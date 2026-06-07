@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Trash2, Clock, MessageSquare } from 'lucide-react';
 import { cn, formatRelativeTime } from '@/lib/utils';
-import { useCards } from '@/hooks/useCards';
+import { useCards, useCard } from '@/hooks/useCards';
 import { useWorkspace } from '@/hooks/useWorkspace';
 import { useToast } from '@/contexts/ToastContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -40,6 +40,7 @@ export function CardDetailPanel({ cardId, canvasId, onClose, preAssignedMemberId
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const isNew = cardId === 'new';
+  const { data: fullCard } = useCard(isNew ? null : cardId);
 
   // Local draft states for creation mode
   const [draftTitle, setDraftTitle] = useState('');
@@ -100,7 +101,7 @@ export function CardDetailPanel({ cardId, canvasId, onClose, preAssignedMemberId
         createdBy: '',
         orderIndex: 0,
       } as any)
-    : (cards?.find((c) => c.id === cardId) || null);
+    : (fullCard || cards?.find((c) => c.id === cardId) || null);
 
   // Combine comments and card activity chronologically
   const combinedFeed = useMemo(() => {
@@ -132,6 +133,7 @@ export function CardDetailPanel({ cardId, canvasId, onClose, preAssignedMemberId
       await updateCard({ id: cardId, ...updates });
       // Invalidate card events to refresh any activity listings immediately
       queryClient.invalidateQueries({ queryKey: ['events', 'card', cardId] });
+      queryClient.invalidateQueries({ queryKey: ['card', cardId] });
     } catch {
       error('Failed to update', 'Please try again');
     }
