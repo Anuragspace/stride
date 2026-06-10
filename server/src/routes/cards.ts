@@ -381,41 +381,35 @@ router.patch('/:cardId', async (req: Request, res: Response, next: NextFunction)
     // Normalize assignee user IDs
     let targetAssigneeIds: string[] | undefined = undefined;
     if (assigneeIds) {
-      targetAssigneeIds = assigneeIds;
+      targetAssigneeIds = Array.from(new Set(assigneeIds));
     } else if (assignees) {
-      targetAssigneeIds = assignees
+      targetAssigneeIds = Array.from(new Set(assignees
         .map((a: any) => {
           if (!a) return null;
           if (typeof a === 'string') return a;
           return a.id || a.userId;
         })
-        .filter(Boolean) as string[];
+        .filter(Boolean) as string[]));
     }
 
     // Normalize labels
     let targetLabels: { name: string; color: string }[] | undefined = undefined;
     if (labels) {
-      targetLabels = labels
-        .map((l: any) => {
-          if (!l) return null;
-          return {
+      const seenLabels = new Set<string>();
+      targetLabels = [];
+      for (const l of labels) {
+        if (!l || !l.name) continue;
+        if (!seenLabels.has(l.name)) {
+          seenLabels.add(l.name);
+          targetLabels.push({
             name: l.name,
             color: l.color || '#3B82F6',
-          };
-        })
-        .filter(Boolean) as { name: string; color: string }[];
+          });
+        }
+      }
     }
 
-    // Sequential transaction — no pre-fetch needed; events use card.canvasId from result
-    const operations: any[] = [];
-    if (targetAssigneeIds !== undefined) {
-      operations.push(prisma.cardAssignee.deleteMany({ where: { cardId } }));
-    }
-    if (targetLabels !== undefined) {
-      operations.push(prisma.cardLabel.deleteMany({ where: { cardId } }));
-    }
-
-    operations.push(prisma.card.update({
+    const card = await prisma.card.update({
       where: { id: cardId },
       data: {
         ...rest,
@@ -423,10 +417,16 @@ router.patch('/:cardId', async (req: Request, res: Response, next: NextFunction)
           ? (rest.dueDate ? new Date(rest.dueDate) : null)
           : undefined,
         assignees: targetAssigneeIds !== undefined
-          ? { create: targetAssigneeIds.map((uid) => ({ userId: uid })) }
+          ? {
+              deleteMany: {},
+              create: targetAssigneeIds.map((uid) => ({ userId: uid }))
+            }
           : undefined,
         labels: targetLabels !== undefined
-          ? { create: targetLabels }
+          ? {
+              deleteMany: {},
+              create: targetLabels
+            }
           : undefined,
       },
       include: {
@@ -439,10 +439,7 @@ router.patch('/:cardId', async (req: Request, res: Response, next: NextFunction)
         labels: true,
         _count: { select: { comments: true, subTasks: true, attachments: true } },
       },
-    }));
-
-    const results = await prisma.$transaction(operations);
-    const card = results[results.length - 1];
+    });
 
     // Fire-and-forget audit events (workspaceId optional — resolved async in fireEvent)
     if (rest.priority) {
@@ -480,28 +477,20 @@ router.post('/reorder', async (req: Request, res: Response, next: NextFunction) 
     // Sort updates by id alphabetically to prevent deadlock situations during concurrent bulk reorders
     const sortedUpdates = [...updates].sort((a, b) => a.id.localeCompare(b.id));
 
-    const cardsWithAssigneeChanges = sortedUpdates.filter(u => u.assigneeIds !== undefined);
-
     const transactionActions = [];
 
-    // Add deleteMany actions for assignees first to avoid unique key conflicts
-    for (const u of cardsWithAssigneeChanges) {
-      transactionActions.push(
-        prisma.cardAssignee.deleteMany({
-          where: { cardId: u.id },
-        })
-      );
-    }
-
-    // Add updates actions (which include position and assignee inserts)
+    // Add updates actions (which include position and nested assignee updates)
     for (const u of sortedUpdates) {
+      // Deduplicate assignee IDs just in case
+      const targetAssigneeIds = u.assigneeIds ? Array.from(new Set(u.assigneeIds)) : undefined;
       transactionActions.push(
         prisma.card.update({
           where: { id: u.id },
           data: {
             position: u.position,
-            assignees: u.assigneeIds !== undefined ? {
-              create: u.assigneeIds.map(uid => ({ userId: uid })),
+            assignees: targetAssigneeIds !== undefined ? {
+              deleteMany: {},
+              create: targetAssigneeIds.map(uid => ({ userId: uid })),
             } : undefined,
           },
           select: {
@@ -539,7 +528,7 @@ router.post('/reorder', async (req: Request, res: Response, next: NextFunction) 
     const results = await prisma.$transaction(transactionActions);
 
     // Extract the updated card objects (which are returned by the update statements)
-    const updatedCards = results.slice(cardsWithAssigneeChanges.length) as any[];
+    const updatedCards = results as any[];
 
     // Emit WebSocket update for each updated card
     const io = getSocketIO();
