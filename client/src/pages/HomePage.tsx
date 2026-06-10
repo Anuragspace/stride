@@ -90,7 +90,7 @@ export default function HomePage() {
                   <motion.div
                     key={canvas.id}
                     whileHover={{ scale: 1.01 }}
-                    onClick={() => navigate(`/canvas/${canvas.id}`)}
+                    onClick={() => navigate(`/app/canvas/${canvas.id}`)}
                     className="bg-[#111113] hover:bg-[#161619] border border-white/[0.04] hover:border-white/[0.08] rounded-xl p-[20px] cursor-pointer gradient-card hover:shadow-xl transition-all duration-150 group"
                   >
                     <div className="flex items-center gap-[10px] mb-[8px]">
@@ -135,7 +135,7 @@ export default function HomePage() {
               </div>
               {!isLoadingEvents && events.length > 0 && (
                 <button
-                  onClick={() => navigate('/activity')}
+                  onClick={() => navigate('/app/activity')}
                   className="w-full py-[12px] text-center text-[12px] font-semibold text-accent hover:text-accent/80 hover:bg-white/[0.02] border-t border-white/[0.04] transition-all duration-150 flex items-center justify-center gap-[6px]"
                 >
                   <span>View all activity</span>
@@ -168,7 +168,7 @@ export default function HomePage() {
                   <motion.div
                     key={canvas.id}
                     whileHover={{ scale: 1.01 }}
-                    onClick={() => navigate(`/canvas/${canvas.id}`)}
+                    onClick={() => navigate(`/app/canvas/${canvas.id}`)}
                     className="bg-surface-2 border border-hairline rounded-xl p-[20px] cursor-pointer gradient-card hover:border-white/[0.12] transition-all duration-150 group"
                   >
                     <div className="flex items-center gap-[10px] mb-[8px]">

@@ -68,7 +68,7 @@ export default function LoginPage() {
         setIsGoogleSignup(true);
       } else {
         showSuccess('Logged in successfully');
-        navigate('/');
+        navigate('/app');
       }
     } catch (err: any) {
       // Log the full error so we can see what's actually failing in production
@@ -162,7 +162,7 @@ export default function LoginPage() {
           showError('Invitation Error', msg);
         }
       }
-      navigate('/');
+      navigate('/app');
     } catch (err: any) {
       const message = err?.response?.data?.error?.message || 'Invalid email or password';
       showError('Login failed', message);
@@ -184,7 +184,7 @@ export default function LoginPage() {
     try {
       await googleRegister(googleCredential, googleProfile.name.trim(), googleProfile.avatarUrl, token || undefined);
       showSuccess('Profile confirmed successfully');
-      navigate('/');
+      navigate('/app');
     } catch (err: any) {
       const message = err?.response?.data?.error?.message || 'Google registration failed';
       showError('Profile setup failed', message);

@@ -30,7 +30,7 @@ export default function CreateWorkspacePage() {
       const { data } = await api.post('/workspaces', { name: name.trim(), slug });
       setWorkspace(data.data.workspace);
       success('Workspace created!', `Welcome to ${name.trim()}`);
-      navigate('/');
+      navigate('/app');
     } catch (err: any) {
       const serverMessage = err?.response?.data?.error?.message;
       showError('Failed to create workspace', serverMessage || 'Please try again');

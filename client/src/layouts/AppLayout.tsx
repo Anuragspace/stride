@@ -62,7 +62,7 @@ export function AppLayout() {
         <header className="h-[52px] flex items-center justify-end gap-[8px] px-[20px] border-b border-hairline flex-shrink-0">
           {workspace && (
             <button
-              onClick={() => navigate('/chat')}
+              onClick={() => navigate('/app/chat')}
               className={cn(
                 "p-[6px] rounded-lg border transition-all relative flex items-center justify-center cursor-pointer",
                 location.pathname === '/chat'
@@ -122,7 +122,7 @@ export function AppLayout() {
                     <button
                       onClick={() => {
                         setIsProfileMenuOpen(false);
-                        navigate('/settings/profile');
+                        navigate('/app/settings/profile');
                       }}
                       className="w-full px-[12px] py-[8px] flex items-center gap-[10px] text-[13px] text-primary rounded-md hover:bg-white/[0.05] cursor-pointer transition-all duration-150"
                     >

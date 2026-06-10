@@ -124,7 +124,7 @@ export function CanvasSettingsModal({ isOpen, onClose, canvasId }: CanvasSetting
         await api.post(`/canvases/${canvasId}/archive`);
         success('Canvas archived', 'Preserved in settings');
         onClose();
-        navigate('/');
+        navigate('/app');
       } catch {
         error('Failed to archive canvas', 'Please try again');
       }
@@ -138,7 +138,7 @@ export function CanvasSettingsModal({ isOpen, onClose, canvasId }: CanvasSetting
         await deleteCanvas(canvasId);
         success('Canvas deleted', 'Permanently deleted');
         onClose();
-        navigate('/');
+        navigate('/app');
       } catch {
         error('Failed to delete canvas', 'Please try again');
       }

@@ -96,7 +96,7 @@ export function ActivityItem({ event, onCardClick }: ActivityItemProps) {
     if (onCardClick) {
       onCardClick(event.cardId);
     } else if (event.canvasId) {
-      navigate(`/canvas/${event.canvasId}/card/${event.cardId}`);
+      navigate(`/app/canvas/${event.canvasId}/card/${event.cardId}`);
     }
   };
 

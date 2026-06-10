@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage'));
 const SignupPage = lazy(() => import('@/pages/auth/SignupPage'));
 const CreateWorkspacePage = lazy(() => import('@/pages/auth/CreateWorkspacePage'));
+const LandingPage = lazy(() => import('@/pages/public/LandingPage'));
 const HomePage = lazy(() => import('@/pages/HomePage'));
 const CanvasPage = lazy(() => import('@/pages/canvas/CanvasPage'));
 const ChatPage = lazy(() => import('@/pages/ChatPage'));
@@ -56,7 +57,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (workspace && location.pathname === '/create-workspace') {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/app" replace />;
   }
 
   return <>{children}</>;
@@ -68,7 +69,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   if (isLoading) return null;
 
   if (isAuthenticated) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/app" replace />;
   }
 
   return <>{children}</>;
@@ -106,21 +107,32 @@ export default function App() {
             <Route index element={<CreateWorkspacePage />} />
           </Route>
 
+          {/* Public Landing Page */}
+          <Route 
+            path="/" 
+            element={
+              <PublicRoute>
+                <LandingPage />
+              </PublicRoute>
+            } 
+          />
+
           {/* App routes */}
           <Route
+            path="/app"
             element={
               <ProtectedRoute>
                 <AppLayout />
               </ProtectedRoute>
             }
           >
-            <Route path="/" element={<HomePage />} />
-            <Route path="/canvas/:canvasId" element={<CanvasPage />} />
-            <Route path="/canvas/:canvasId/card/:cardId" element={<CanvasPage />} />
-            <Route path="/chat" element={<ChatPage />} />
-            <Route path="/activity" element={<ActivityPage />} />
-            <Route path="/settings" element={<WorkspaceSettingsPage />} />
-            <Route path="/settings/profile" element={<ProfileSettingsPage />} />
+            <Route index element={<HomePage />} />
+            <Route path="canvas/:canvasId" element={<CanvasPage />} />
+            <Route path="canvas/:canvasId/card/:cardId" element={<CanvasPage />} />
+            <Route path="chat" element={<ChatPage />} />
+            <Route path="activity" element={<ActivityPage />} />
+            <Route path="settings" element={<WorkspaceSettingsPage />} />
+            <Route path="settings/profile" element={<ProfileSettingsPage />} />
           </Route>
 
           {/* Catch-all redirect */}

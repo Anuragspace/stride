@@ -42,28 +42,28 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
       label: 'Go to Home',
       icon: <LayoutDashboard className="w-[16px] h-[16px]" />,
       section: 'Navigation',
-      action: () => { navigate('/'); onClose(); },
+      action: () => { navigate('/app'); onClose(); },
     },
     {
       id: 'activity',
       label: 'Go to Activity',
       icon: <Activity className="w-[16px] h-[16px]" />,
       section: 'Navigation',
-      action: () => { navigate('/activity'); onClose(); },
+      action: () => { navigate('/app/activity'); onClose(); },
     },
     {
       id: 'settings',
       label: 'Go to Settings',
       icon: <Settings className="w-[16px] h-[16px]" />,
       section: 'Navigation',
-      action: () => { navigate('/settings'); onClose(); },
+      action: () => { navigate('/app/settings'); onClose(); },
     },
     ...(canvases || []).map((canvas) => ({
       id: `canvas-${canvas.id}`,
       label: `${canvas.emoji || '📋'} ${canvas.name}`,
       icon: <FileText className="w-[16px] h-[16px]" />,
       section: 'Canvases',
-      action: () => { navigate(`/canvas/${canvas.id}`); onClose(); },
+      action: () => { navigate(`/app/canvas/${canvas.id}`); onClose(); },
     })),
   ];
 

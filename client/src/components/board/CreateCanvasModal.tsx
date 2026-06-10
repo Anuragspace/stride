@@ -73,7 +73,7 @@ export function CreateCanvasModal({ isOpen, onClose }: CreateCanvasModalProps) {
       success('Canvas created', `"${name.trim()}" is ready`);
       handleClose();
       if (canvas?.id) {
-        navigate(`/canvas/${canvas.id}`);
+        navigate(`/app/canvas/${canvas.id}`);
       }
     } catch (err: any) {
       console.error('Failed to create canvas:', err);

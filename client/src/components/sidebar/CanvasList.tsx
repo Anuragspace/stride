@@ -40,7 +40,7 @@ export function CanvasList({ isCollapsed }: CanvasListProps) {
       return (
         <Tooltip key={canvas.id} content={canvas.name} side="right">
           <button
-            onClick={() => navigate(`/canvas/${canvas.id}`)}
+            onClick={() => navigate(`/app/canvas/${canvas.id}`)}
             className={cn(
               'w-[36px] h-[36px] flex items-center justify-center rounded-md transition-all duration-150',
               isActive
@@ -63,7 +63,7 @@ export function CanvasList({ isCollapsed }: CanvasListProps) {
             ? 'bg-white/[0.08] text-ink'
             : 'text-ink-muted hover:text-ink hover:bg-white/[0.05]'
         )}
-        onClick={() => navigate(`/canvas/${canvas.id}`)}
+        onClick={() => navigate(`/app/canvas/${canvas.id}`)}
         role="button"
         tabIndex={0}
       >

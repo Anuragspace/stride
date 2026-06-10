@@ -55,7 +55,7 @@ export default function InvitePage() {
         setWorkspace(workspace);
       }
       showSuccess('Welcome!', `Successfully joined "${inviteData?.workspaceName}"`);
-      navigate('/');
+      navigate('/app');
     } catch (err: any) {
       const message = err?.response?.data?.error?.message || 'Failed to accept invitation';
       showError('Acceptance failed', message);
@@ -102,7 +102,7 @@ export default function InvitePage() {
           <p className="text-sm text-ink-muted leading-relaxed mb-6">
             {errorMsg || 'This invite link is invalid, expired, or has already been accepted.'}
           </p>
-          <Button variant="secondary" className="w-full" onClick={() => navigate('/')}>
+          <Button variant="secondary" className="w-full" onClick={() => navigate('/app')}>
             Back to Home
           </Button>
         </motion.div>
@@ -183,7 +183,7 @@ export default function InvitePage() {
                 <Button variant="secondary" className="flex-1" onClick={handleLogout}>
                   Sign Out
                 </Button>
-                <Button variant="primary" className="flex-1" onClick={() => navigate('/')}>
+                <Button variant="primary" className="flex-1" onClick={() => navigate('/app')}>
                   Go to Portal
                 </Button>
               </div>

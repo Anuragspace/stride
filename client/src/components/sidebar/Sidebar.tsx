@@ -33,9 +33,9 @@ export function Sidebar({ onOpenCommandPalette, onCreateCanvas }: SidebarProps) 
   }, [isCollapsed]);
 
   const navItems = [
-    { id: 'home', label: 'Home', icon: <LayoutDashboard className="w-[18px] h-[18px]" />, path: '/' },
-    { id: 'activity', label: 'Activity', icon: <Activity className="w-[18px] h-[18px]" />, path: '/activity' },
-    { id: 'settings', label: 'Settings', icon: <Settings className="w-[18px] h-[18px]" />, path: '/settings' },
+    { id: 'home', label: 'Home', icon: <LayoutDashboard className="w-[18px] h-[18px]" />, path: '/app' },
+    { id: 'activity', label: 'Activity', icon: <Activity className="w-[18px] h-[18px]" />, path: '/app/activity' },
+    { id: 'settings', label: 'Settings', icon: <Settings className="w-[18px] h-[18px]" />, path: '/app/settings' },
   ];
 
   return (
@@ -123,7 +123,7 @@ export function Sidebar({ onOpenCommandPalette, onCreateCanvas }: SidebarProps) 
             label="Chat"
             isActive={location.pathname === '/chat'}
             isCollapsed={isCollapsed}
-            onClick={() => navigate('/chat')}
+            onClick={() => navigate('/app/chat')}
           />
         </div>
       </div>

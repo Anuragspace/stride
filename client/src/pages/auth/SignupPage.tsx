@@ -63,7 +63,7 @@ export default function SignupPage() {
         setIsGoogleSignup(true);
       } else {
         showSuccess('Logged in successfully');
-        navigate('/');
+        navigate('/app');
       }
     } catch (err: any) {
       const message = err?.response?.data?.error?.message || 'Google authentication failed';
@@ -147,11 +147,11 @@ export default function SignupPage() {
             setWorkspace(workspace);
           }
           showSuccess('Welcome!', 'Successfully accepted workspace invitation');
-          navigate('/');
+          navigate('/app');
         } catch (err: any) {
           const msg = err?.response?.data?.error?.message || 'Failed to accept invitation';
           showError('Invitation Error', msg);
-          navigate('/');
+          navigate('/app');
         }
       } else {
         navigate('/create-workspace');
@@ -172,7 +172,7 @@ export default function SignupPage() {
     try {
       await googleRegister(googleCredential, googleProfile.name.trim(), googleProfile.avatarUrl, token || undefined);
       showSuccess('Profile confirmed successfully');
-      navigate('/');
+      navigate('/app');
     } catch (err: any) {
       const message = err?.response?.data?.error?.message || 'Google registration failed';
       showError('Profile setup failed', message);
