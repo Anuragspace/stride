@@ -3,9 +3,62 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { SEO } from '@/components/SEO';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const { googleLogin, isAuthenticated } = useAuth();
+  const { error, success } = useToast();
+
+  React.useEffect(() => {
+    if (isAuthenticated) return;
+
+    const initGoogleOneTap = () => {
+      const google = (window as any).google;
+      if (google && google.accounts && !(window as any).landingGsiInitialized) {
+        (window as any).landingGsiInitialized = true;
+        
+        google.accounts.id.initialize({
+          client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+          callback: async (response: any) => {
+            try {
+              const res = await googleLogin(response.credential);
+              if (res.isNewUser) {
+                navigate('/signup', { 
+                  state: { 
+                    googleCredential: response.credential,
+                    googleProfile: { email: res.email, name: res.name, avatarUrl: res.avatarUrl }
+                  } 
+                });
+              } else {
+                success('Welcome back!');
+                navigate('/app/dashboard');
+              }
+            } catch (err: any) {
+              error('Sign in failed: ' + err.message);
+            }
+          },
+          auto_select: false,
+          cancel_on_tap_outside: false
+        });
+        
+        google.accounts.id.prompt();
+      }
+    };
+
+    const timer = setTimeout(initGoogleOneTap, 1000);
+    return () => {
+      clearTimeout(timer);
+      const google = (window as any).google;
+      if (google && google.accounts) {
+        try {
+          google.accounts.id.cancel();
+        } catch {}
+      }
+      (window as any).landingGsiInitialized = false;
+    };
+  }, [isAuthenticated, googleLogin, navigate, success, error]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -71,7 +124,7 @@ export default function LandingPage() {
       >
         <div className="max-w-[1400px] mx-auto flex items-center justify-between px-6 py-8 md:px-12">
           <div className="flex items-center">
-            <img src="/stride-logo.png" alt="Stride" className="w-[120px] md:w-[140px] object-contain object-left" />
+            <img src="/stride-logo.png" alt="Stride" className="h-8 md:h-10 w-auto object-contain object-left" />
           </div>
 
           <div className="flex items-center gap-2 md:gap-4">
@@ -117,7 +170,7 @@ export default function LandingPage() {
           <motion.div variants={itemVariants} className="flex items-center justify-center w-full">
             <button 
               onClick={() => navigate('/signup')}
-              className="group relative inline-flex items-center justify-center gap-2 h-12 px-8 md:h-[52px] md:px-10 bg-white text-black font-semibold rounded-full hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl duration-300 whitespace-nowrap text-[15px]"
+              className="group relative inline-flex items-center justify-center gap-2 h-[44px] px-6 bg-white text-black font-semibold rounded-full hover:bg-gray-100 transition-all shadow-md hover:shadow-lg duration-300 whitespace-nowrap text-[14px]"
             >
               Get Started 
               <ChevronRight className="w-4 h-4 text-black/70 group-hover:translate-x-1 transition-transform" />

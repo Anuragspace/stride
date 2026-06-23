@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { User as UserIcon, Mail, Lock, Camera } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
@@ -19,10 +19,13 @@ export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const location = useLocation();
+  const state = location.state as { googleCredential?: string; googleProfile?: any } | null;
+
   // Google Onboarding State
-  const [isGoogleSignup, setIsGoogleSignup] = useState(false);
-  const [googleCredential, setGoogleCredential] = useState('');
-  const [googleProfile, setGoogleProfile] = useState({
+  const [isGoogleSignup, setIsGoogleSignup] = useState(!!state?.googleCredential);
+  const [googleCredential, setGoogleCredential] = useState(state?.googleCredential || '');
+  const [googleProfile, setGoogleProfile] = useState(state?.googleProfile || {
     email: '',
     name: '',
     avatarUrl: '',
