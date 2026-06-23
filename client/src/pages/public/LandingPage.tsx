@@ -71,7 +71,7 @@ export default function LandingPage() {
       >
         <div className="max-w-[1400px] mx-auto flex items-center justify-between px-6 py-8 md:px-12">
           <div className="flex items-center">
-            <img src="/stride-logo.png" alt="Stride" className="w-[180px] md:w-[260px] object-contain object-left" />
+            <img src="/stride-logo.png" alt="Stride" className="w-[120px] md:w-[140px] object-contain object-left" />
           </div>
 
           <div className="flex items-center gap-2 md:gap-4">
@@ -117,7 +117,7 @@ export default function LandingPage() {
           <motion.div variants={itemVariants} className="flex items-center justify-center w-full">
             <button 
               onClick={() => navigate('/signup')}
-              className="group relative inline-flex items-center justify-center gap-2 px-10 py-4 md:py-5 bg-white text-black font-semibold rounded-full hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl duration-300 whitespace-nowrap text-[15px] md:text-[16px]"
+              className="group relative inline-flex items-center justify-center gap-2 h-12 px-8 md:h-[52px] md:px-10 bg-white text-black font-semibold rounded-full hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl duration-300 whitespace-nowrap text-[15px]"
             >
               Get Started 
               <ChevronRight className="w-4 h-4 text-black/70 group-hover:translate-x-1 transition-transform" />
