@@ -10,6 +10,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { cn } from '@/lib/utils';
+import { SEO } from '@/components/SEO';
 
 export function AppLayout() {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
@@ -51,7 +52,8 @@ export function AppLayout() {
   };
 
   return (
-    <div className="flex h-screen bg-canvas overflow-hidden">
+    <div className="flex h-screen bg-canvas text-ink overflow-hidden selection:bg-accent/30 selection:text-ink">
+      <SEO title="Dashboard | Stride" />
       <Sidebar
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
         onCreateCanvas={() => setIsCreateCanvasOpen(true)}

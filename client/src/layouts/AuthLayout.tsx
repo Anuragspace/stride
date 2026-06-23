@@ -18,10 +18,8 @@ export function AuthLayout() {
         className="relative z-10 w-full max-w-[420px] mx-[20px]"
       >
         {/* Logo */}
-        <div className="text-center mb-[40px]">
-          <h1 className="text-[32px] font-bold text-ink tracking-display">
-            Stride
-          </h1>
+        <div className="text-center mb-[40px] flex flex-col items-center">
+          <img src="/stride-logo.png" alt="Stride" className="h-12 w-auto object-contain mb-[4px]" />
           <p className="text-[14px] text-ink-muted mt-[4px]">
             Project management, reimagined
           </p>

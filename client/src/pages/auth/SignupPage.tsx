@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
+import { SEO } from '@/components/SEO';
 import api from '@/lib/api';
 import { compressAvatar } from '@/lib/image';
 
@@ -257,6 +258,7 @@ export default function SignupPage() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-[20px]" key="signup-main">
+      <SEO title="Sign Up | Stride" />
       <div className="text-center mb-[8px]">
         <h2 className="text-[20px] font-semibold text-ink tracking-heading">Create account</h2>
         <p className="text-[13px] text-ink-muted mt-[4px]">Get started with Stride</p>

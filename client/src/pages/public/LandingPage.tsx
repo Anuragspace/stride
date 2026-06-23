@@ -1,156 +1,130 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, Layers, Zap, Shield, LayoutDashboard, MessageSquare } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { SEO } from '@/components/SEO';
 
 export default function LandingPage() {
   const navigate = useNavigate();
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.15,
+        delayChildren: 0.2,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        type: 'tween',
+        duration: 0.6,
+        ease: [0.16, 1, 0.3, 1],
+      },
+    },
+  };
+
   return (
-    <div className="min-h-screen bg-canvas text-ink overflow-x-hidden font-sans selection:bg-accent/30 selection:text-ink">
-      {/* Background Gradient Spotlight */}
-      <div className="fixed inset-0 z-0 pointer-events-none flex items-center justify-center">
-        <div className="w-[800px] h-[800px] bg-accent rounded-full blur-[150px] opacity-[0.03]" />
+    <div className="min-h-screen bg-canvas text-ink overflow-x-hidden font-sans selection:bg-accent/30 selection:text-ink relative flex flex-col">
+      <SEO />
+      {/* Background Gradient */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1.5, ease: "easeOut" }}
+          className="absolute -top-[400px] -left-[200px] w-[800px] h-[800px] rounded-full bg-gradient-to-r from-accent/[0.05] to-gradient-violet/[0.04] blur-3xl" 
+        />
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1.5, ease: "easeOut", delay: 0.2 }}
+          className="absolute -bottom-[400px] -right-[200px] w-[800px] h-[800px] rounded-full bg-gradient-to-l from-gradient-magenta/[0.04] to-gradient-orange/[0.03] blur-3xl" 
+        />
       </div>
 
+      {/* Grid Pattern Overlay */}
+      <div 
+        className="absolute inset-0 z-0 opacity-10 pointer-events-none"
+        style={{
+          backgroundImage: `
+            linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px)
+          `,
+          backgroundSize: '40px 40px'
+        }}
+      />
+
       {/* Top Navigation */}
-      <nav className="relative z-50 flex items-center justify-between px-6 py-4 md:px-12 backdrop-blur-md border-b border-hairline bg-canvas/80">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-md bg-accent flex items-center justify-center font-bold text-lg text-white shadow-lg shadow-accent/20">
-            S
+      <motion.nav 
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="relative z-50 w-full"
+      >
+        <div className="max-w-[1400px] mx-auto flex items-center justify-between px-6 py-8 md:px-12">
+          <div className="flex items-center">
+            <img src="/stride-logo.png" alt="Stride" className="w-[180px] md:w-[260px] object-contain object-left" />
           </div>
-          <span className="text-xl font-bold tracking-heading text-ink">Stride</span>
+
+          <div className="flex items-center gap-2 md:gap-4">
+            <button 
+              onClick={() => navigate('/login')}
+              className="text-[14px] font-medium text-ink-subtle hover:text-ink transition-colors px-4 py-2 whitespace-nowrap rounded-full"
+            >
+              Log in
+            </button>
+            <button 
+              onClick={() => navigate('/signup')}
+              className="text-[14px] px-6 py-2.5 bg-surface-1 border border-hairline text-ink font-semibold rounded-full hover:bg-surface-2 hover:border-white/20 transition-all shadow-sm whitespace-nowrap"
+            >
+              Sign up
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={() => navigate('/login')}
-            className="text-[13px] font-medium text-ink-subtle hover:text-ink transition-colors"
-          >
-            Log in
-          </button>
-          <button 
-            onClick={() => navigate('/signup')}
-            className="text-[13px] px-4 py-2 bg-ink text-canvas font-semibold rounded-md hover:bg-white/90 transition-colors shadow-sm"
-          >
-            Sign up
-          </button>
-        </div>
-      </nav>
+      </motion.nav>
 
       {/* Hero Section */}
-      <main className="relative z-10 flex flex-col items-center justify-center min-h-[85vh] px-6 text-center max-w-5xl mx-auto mt-12 md:mt-0">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-hairline bg-surface-1 mb-8">
-          <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-          <span className="text-[12px] font-medium text-ink-subtle tracking-wide uppercase">Stride v1.0 is live</span>
-        </div>
-
-        <h1 className="text-5xl md:text-7xl font-bold tracking-display leading-[1.1] text-ink mb-6">
-          The Workspace That <br className="hidden md:block"/> Moves With You
-        </h1>
-
-        <p className="text-ink-muted max-w-2xl text-lg md:text-xl leading-relaxed mb-10 tracking-body">
-          A unified context layer connecting your team's real-time kanban boards, lightning-fast chat, and workflow automation in one beautifully designed space.
-        </p>
-
-        <div className="flex flex-col sm:flex-row items-center gap-4">
-          <button 
-            onClick={() => navigate('/signup')}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-accent text-white font-medium rounded-md hover:bg-accent/90 transition-all shadow-[0_0_20px_rgba(0,153,255,0.2)] hover:shadow-[0_0_30px_rgba(0,153,255,0.4)]"
-          >
-            Get Started <ChevronRight className="w-4 h-4" />
-          </button>
-          <button 
-            onClick={() => navigate('/login')}
-            className="w-full sm:w-auto px-6 py-3 bg-surface-1 border border-hairline text-ink font-medium rounded-md hover:bg-surface-2 transition-colors"
-          >
-            View Demo
-          </button>
-        </div>
-
-        {/* Abstract Product Visual */}
-        <div className="mt-20 w-full relative h-[400px] rounded-xl overflow-hidden border border-hairline bg-surface-1 shadow-2xl flex flex-col items-center justify-center group">
-          <div className="absolute inset-0 bg-gradient-to-t from-canvas to-transparent z-10" />
-          <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
-          
-          <div className="relative z-20 flex gap-4 transform transition-transform duration-700 group-hover:scale-105">
-            <div className="w-64 h-48 rounded-lg border border-hairline bg-surface-2 shadow-xl p-4 flex flex-col gap-3 -rotate-6 translate-y-4">
-               <div className="h-4 w-1/2 bg-surface-3 rounded animate-pulse" />
-               <div className="h-16 w-full bg-surface-3 rounded flex items-center justify-center text-ink-subtle"><LayoutDashboard className="w-6 h-6" /></div>
-               <div className="h-16 w-full bg-surface-3 rounded" />
-            </div>
-            <div className="w-64 h-48 rounded-lg border border-accent/30 bg-surface-2 shadow-[0_0_30px_rgba(0,153,255,0.15)] p-4 flex flex-col gap-3 z-30">
-               <div className="h-4 w-1/3 bg-accent/40 rounded" />
-               <div className="flex-1 w-full bg-accent/10 rounded border border-accent/20 flex items-center justify-center">
-                 <div className="w-12 h-12 rounded-full bg-accent flex items-center justify-center text-white"><Shield className="w-6 h-6" /></div>
-               </div>
-            </div>
-            <div className="w-64 h-48 rounded-lg border border-hairline bg-surface-2 shadow-xl p-4 flex flex-col gap-3 rotate-6 translate-y-4">
-               <div className="h-4 w-2/3 bg-surface-3 rounded" />
-               <div className="flex gap-2">
-                 <div className="w-8 h-8 rounded-full bg-surface-3" />
-                 <div className="flex-1 bg-surface-3 rounded" />
-               </div>
-               <div className="flex gap-2 mt-auto">
-                 <div className="w-8 h-8 rounded-full bg-surface-3" />
-                 <div className="flex-1 bg-surface-3 rounded flex items-center justify-center text-ink-subtle"><MessageSquare className="w-4 h-4" /></div>
-               </div>
-            </div>
-          </div>
-        </div>
-      </main>
-
-      {/* Features Grid */}
-      <section className="relative z-10 max-w-5xl mx-auto px-6 py-32 border-t border-hairline">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold tracking-heading text-ink mb-4">
-            Built for High Performance Teams
-          </h2>
-          <p className="text-ink-subtle max-w-xl mx-auto text-lg">
-            Everything you need to orchestrate complex workflows without the clutter.
-          </p>
-        </div>
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 text-center max-w-4xl mx-auto -mt-16 w-full">
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="p-6 rounded-xl border border-hairline bg-surface-1 hover:bg-surface-2 transition-colors">
-            <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center mb-4 border border-accent/20">
-              <Zap className="w-5 h-5 text-accent" />
-            </div>
-            <h3 className="text-lg font-semibold text-ink mb-2 tracking-heading">Real-time Sync</h3>
-            <p className="text-[14px] text-ink-subtle leading-relaxed">
-              Experience zero-latency updates across all devices. WebSockets ensure your team always sees the latest changes instantly.
-            </p>
-          </div>
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="flex flex-col items-center justify-center w-full"
+        >
+          {/* Badge */}
+          <motion.div variants={itemVariants} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-hairline bg-surface-1/30 backdrop-blur-sm mb-10">
+            <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+            <span className="text-[12px] font-medium text-ink-subtle uppercase tracking-widest pl-1 pr-2">Stride v1.0 is live</span>
+          </motion.div>
 
-          <div className="p-6 rounded-xl border border-hairline bg-surface-1 hover:bg-surface-2 transition-colors">
-            <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center mb-4 border border-accent/20">
-              <Layers className="w-5 h-5 text-accent" />
-            </div>
-            <h3 className="text-lg font-semibold text-ink mb-2 tracking-heading">Infinite Canvas</h3>
-            <p className="text-[14px] text-ink-subtle leading-relaxed">
-              Organize projects your way with flexible kanban boards, list views, and rich text documents that scale with you.
-            </p>
-          </div>
+          <motion.h1 variants={itemVariants} className="text-[3rem] md:text-[4.5rem] lg:text-[5.5rem] font-bold tracking-tight leading-[1.05] text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-white/70 mb-8 max-w-4xl">
+            Project management <br className="hidden md:block"/> made effortless.
+          </motion.h1>
 
-          <div className="p-6 rounded-xl border border-hairline bg-surface-1 hover:bg-surface-2 transition-colors">
-            <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center mb-4 border border-accent/20">
-              <Shield className="w-5 h-5 text-accent" />
-            </div>
-            <h3 className="text-lg font-semibold text-ink mb-2 tracking-heading">Enterprise Security</h3>
-            <p className="text-[14px] text-ink-subtle leading-relaxed">
-              Bank-grade encryption, secure OAuth, opaque refresh tokens, and strict role-based access control built right in.
-            </p>
-          </div>
-        </div>
-      </section>
-      
-      <footer className="border-t border-hairline py-10 px-6 text-center text-ink-subtle text-[13px] bg-surface-1">
-        <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded bg-accent flex items-center justify-center font-bold text-[10px] text-white">S</div>
-            <span className="font-semibold text-ink">Stride</span>
-          </div>
-          <p>© 2026 Stride Inc. All rights reserved.</p>
-        </div>
-      </footer>
+          <motion.p variants={itemVariants} className="text-ink-subtle max-w-2xl text-lg md:text-xl leading-relaxed mb-12 tracking-body">
+            We help teams securely collaborate, organize tasks, and communicate in real-time globally. Without the clutter and noise.
+          </motion.p>
+
+          <motion.div variants={itemVariants} className="flex items-center justify-center w-full">
+            <button 
+              onClick={() => navigate('/signup')}
+              className="group relative inline-flex items-center justify-center gap-2 px-10 py-4 md:py-5 bg-white text-black font-semibold rounded-full hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl duration-300 whitespace-nowrap text-[15px] md:text-[16px]"
+            >
+              Get Started 
+              <ChevronRight className="w-4 h-4 text-black/70 group-hover:translate-x-1 transition-transform" />
+            </button>
+          </motion.div>
+        </motion.div>
+      </main>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
+import { SEO } from '@/components/SEO';
 import api from '@/lib/api';
 
 export default function LoginPage() {
@@ -196,6 +197,7 @@ export default function LoginPage() {
   if (isGoogleSignup) {
     return (
       <form onSubmit={handleGoogleRegisterSubmit} className="space-y-[20px]" key="google-confirm">
+        <SEO title="Confirm Profile | Stride" />
         <div className="text-center mb-[8px]">
           <h2 className="text-[20px] font-semibold text-ink tracking-heading">Confirm your profile</h2>
           <p className="text-[13px] text-ink-muted mt-[4px]">Review your details before joining Stride</p>
@@ -272,6 +274,7 @@ export default function LoginPage() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-[20px]" key="login-main">
+      <SEO title="Log In | Stride" />
       <div className="text-center mb-[8px]">
         <h2 className="text-[20px] font-semibold text-ink tracking-heading">Welcome back</h2>
         <p className="text-[13px] text-ink-muted mt-[4px]">Sign in to your workspace</p>

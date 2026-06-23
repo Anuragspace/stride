@@ -7,6 +7,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { SocketProvider } from '@/contexts/SocketContext';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { ToastContainer } from '@/components/ui/Toast';
+import { HelmetProvider } from 'react-helmet-async';
 import App from '@/App';
 import '@/index.css';
 
@@ -45,10 +46,12 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     >
       <ToastProvider>
         <AuthProvider>
-          <SocketProvider>
-            <App />
-            <ToastContainer />
-          </SocketProvider>
+          <HelmetProvider>
+            <SocketProvider>
+              <App />
+              <ToastContainer />
+            </SocketProvider>
+          </HelmetProvider>
         </AuthProvider>
       </ToastProvider>
     </PersistQueryClientProvider>

@@ -45,6 +45,15 @@ export function Sidebar({ onOpenCommandPalette, onCreateCanvas }: SidebarProps) 
         isCollapsed ? 'w-[60px]' : 'w-[260px]'
       )}
     >
+      {/* App Logo */}
+      <div className="px-[16px] pt-[16px] pb-[8px] flex items-center justify-center">
+        {isCollapsed ? (
+          <img src="/stride-icon.png" alt="Stride" className="w-[32px] h-[32px] object-contain" />
+        ) : (
+          <img src="/stride-logo.png" alt="Stride" className="h-[32px] w-auto object-contain" />
+        )}
+      </div>
+
       {/* Workspace Switcher */}
       <div className="px-[12px] pt-[12px] pb-[4px]">
         <WorkspaceSwitcher isCollapsed={isCollapsed} />
