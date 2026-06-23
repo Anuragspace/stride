@@ -1,133 +1,155 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ChevronRight, Layers, Zap, Shield, LayoutDashboard, MessageSquare } from 'lucide-react';
 
 export default function LandingPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white overflow-x-hidden font-mono selection:bg-[#FF4B2B] selection:text-white">
-      {/* Abstract Background Grid */}
-      <div 
-        className="fixed inset-0 z-0 opacity-20 pointer-events-none"
-        style={{
-          backgroundImage: `
-            linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px)
-          `,
-          backgroundSize: '40px 40px'
-        }}
-      />
+    <div className="min-h-screen bg-canvas text-ink overflow-x-hidden font-sans selection:bg-accent/30 selection:text-ink">
+      {/* Background Gradient Spotlight */}
+      <div className="fixed inset-0 z-0 pointer-events-none flex items-center justify-center">
+        <div className="w-[800px] h-[800px] bg-accent rounded-full blur-[150px] opacity-[0.03]" />
+      </div>
 
       {/* Top Navigation */}
-      <nav className="relative z-50 flex items-center justify-between px-6 py-4 md:px-12 backdrop-blur-sm border-b border-white/5">
+      <nav className="relative z-50 flex items-center justify-between px-6 py-4 md:px-12 backdrop-blur-md border-b border-hairline bg-canvas/80">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded bg-gradient-to-br from-[#FF4B2B] to-[#FF416C] flex items-center justify-center font-bold text-lg shadow-[0_0_15px_rgba(255,75,43,0.5)]">
+          <div className="w-8 h-8 rounded-md bg-accent flex items-center justify-center font-bold text-lg text-white shadow-lg shadow-accent/20">
             S
           </div>
-          <span className="text-xl font-bold tracking-tight">StrideWay</span>
+          <span className="text-xl font-bold tracking-heading text-ink">Stride</span>
         </div>
         <div className="flex items-center gap-4">
           <button 
             onClick={() => navigate('/login')}
-            className="text-sm text-gray-400 hover:text-white transition-colors"
+            className="text-[13px] font-medium text-ink-subtle hover:text-ink transition-colors"
           >
-            Log In
+            Log in
           </button>
           <button 
             onClick={() => navigate('/signup')}
-            className="text-sm px-4 py-2 bg-white text-black font-semibold rounded hover:bg-gray-200 transition-colors"
+            className="text-[13px] px-4 py-2 bg-ink text-canvas font-semibold rounded-md hover:bg-white/90 transition-colors shadow-sm"
           >
-            Sign Up
+            Sign up
           </button>
         </div>
       </nav>
 
       {/* Hero Section */}
       <main className="relative z-10 flex flex-col items-center justify-center min-h-[85vh] px-6 text-center max-w-5xl mx-auto mt-12 md:mt-0">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#FF4B2B] rounded-full blur-[150px] opacity-10 pointer-events-none" />
-        
-        <div className="space-y-2 mb-8">
-          <p className="text-[#FF4B2B] uppercase tracking-[0.2em] text-xs md:text-sm font-semibold">
-            // Fast & Furious Collaboration //
-          </p>
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tighter leading-tight text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-500 font-sans">
-            The Brain Behind Your <br className="hidden md:block"/> Team's Flow
-          </h1>
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-hairline bg-surface-1 mb-8">
+          <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+          <span className="text-[12px] font-medium text-ink-subtle tracking-wide uppercase">Stride v1.0 is live</span>
         </div>
 
-        <p className="text-gray-400 max-w-2xl text-lg md:text-xl leading-relaxed mb-10 font-sans">
-          A unified context layer to capture your entire working context: 
-          real-time kanban, lightning-fast chat, and scalable architecture designed for high throughput.
+        <h1 className="text-5xl md:text-7xl font-bold tracking-display leading-[1.1] text-ink mb-6">
+          The Workspace That <br className="hidden md:block"/> Moves With You
+        </h1>
+
+        <p className="text-ink-muted max-w-2xl text-lg md:text-xl leading-relaxed mb-10 tracking-body">
+          A unified context layer connecting your team's real-time kanban boards, lightning-fast chat, and workflow automation in one beautifully designed space.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center gap-4">
           <button 
             onClick={() => navigate('/signup')}
-            className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-[#FF4B2B] to-[#FF416C] text-white font-bold rounded shadow-[0_0_20px_rgba(255,75,43,0.4)] hover:shadow-[0_0_30px_rgba(255,75,43,0.6)] transition-all transform hover:-translate-y-0.5"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-accent text-white font-medium rounded-md hover:bg-accent/90 transition-all shadow-[0_0_20px_rgba(0,153,255,0.2)] hover:shadow-[0_0_30px_rgba(0,153,255,0.4)]"
           >
-            Get Started
+            Get Started <ChevronRight className="w-4 h-4" />
           </button>
           <button 
-            className="w-full sm:w-auto px-8 py-3 bg-white/5 border border-white/10 text-white font-bold rounded hover:bg-white/10 transition-all"
+            onClick={() => navigate('/login')}
+            className="w-full sm:w-auto px-6 py-3 bg-surface-1 border border-hairline text-ink font-medium rounded-md hover:bg-surface-2 transition-colors"
           >
-            Talk to us
+            View Demo
           </button>
         </div>
 
-        {/* Abstract Data Tree Graphic (Placeholder for the generated image) */}
-        <div className="mt-20 w-full relative h-[400px] rounded-xl overflow-hidden border border-white/10 bg-black/50 shadow-2xl">
-          {/* Fallback graphic if image is not ready */}
-          <div className="absolute inset-0 flex items-center justify-center flex-col gap-4 opacity-50">
-            <div className="w-1/2 h-px bg-gradient-to-r from-transparent via-[#FF4B2B] to-transparent shadow-[0_0_10px_#FF4B2B]" />
-            <div className="flex gap-10">
-              <div className="w-px h-32 bg-gradient-to-b from-[#FF4B2B] to-transparent" />
-              <div className="w-px h-24 bg-gradient-to-b from-[#FF4B2B] to-transparent" />
-              <div className="w-px h-40 bg-gradient-to-b from-[#FF4B2B] to-transparent" />
+        {/* Abstract Product Visual */}
+        <div className="mt-20 w-full relative h-[400px] rounded-xl overflow-hidden border border-hairline bg-surface-1 shadow-2xl flex flex-col items-center justify-center group">
+          <div className="absolute inset-0 bg-gradient-to-t from-canvas to-transparent z-10" />
+          <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
+          
+          <div className="relative z-20 flex gap-4 transform transition-transform duration-700 group-hover:scale-105">
+            <div className="w-64 h-48 rounded-lg border border-hairline bg-surface-2 shadow-xl p-4 flex flex-col gap-3 -rotate-6 translate-y-4">
+               <div className="h-4 w-1/2 bg-surface-3 rounded animate-pulse" />
+               <div className="h-16 w-full bg-surface-3 rounded flex items-center justify-center text-ink-subtle"><LayoutDashboard className="w-6 h-6" /></div>
+               <div className="h-16 w-full bg-surface-3 rounded" />
             </div>
-            <p className="text-xs text-gray-500 uppercase tracking-widest">[ Abstract Data Tree Visual ]</p>
+            <div className="w-64 h-48 rounded-lg border border-accent/30 bg-surface-2 shadow-[0_0_30px_rgba(0,153,255,0.15)] p-4 flex flex-col gap-3 z-30">
+               <div className="h-4 w-1/3 bg-accent/40 rounded" />
+               <div className="flex-1 w-full bg-accent/10 rounded border border-accent/20 flex items-center justify-center">
+                 <div className="w-12 h-12 rounded-full bg-accent flex items-center justify-center text-white"><Shield className="w-6 h-6" /></div>
+               </div>
+            </div>
+            <div className="w-64 h-48 rounded-lg border border-hairline bg-surface-2 shadow-xl p-4 flex flex-col gap-3 rotate-6 translate-y-4">
+               <div className="h-4 w-2/3 bg-surface-3 rounded" />
+               <div className="flex gap-2">
+                 <div className="w-8 h-8 rounded-full bg-surface-3" />
+                 <div className="flex-1 bg-surface-3 rounded" />
+               </div>
+               <div className="flex gap-2 mt-auto">
+                 <div className="w-8 h-8 rounded-full bg-surface-3" />
+                 <div className="flex-1 bg-surface-3 rounded flex items-center justify-center text-ink-subtle"><MessageSquare className="w-4 h-4" /></div>
+               </div>
+            </div>
           </div>
         </div>
       </main>
 
-      {/* Features Bento Grid */}
-      <section className="relative z-10 max-w-6xl mx-auto px-6 py-24 border-t border-white/5 mt-10">
-        <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-center mb-16 font-sans">
-          Everything You Need To<br/>Build Real Synergy
-        </h2>
+      {/* Features Grid */}
+      <section className="relative z-10 max-w-5xl mx-auto px-6 py-32 border-t border-hairline">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold tracking-heading text-ink mb-4">
+            Built for High Performance Teams
+          </h2>
+          <p className="text-ink-subtle max-w-xl mx-auto text-lg">
+            Everything you need to orchestrate complex workflows without the clutter.
+          </p>
+        </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="p-8 rounded-xl border border-white/10 bg-gradient-to-b from-white/[0.03] to-transparent hover:border-[#FF4B2B]/50 transition-colors group">
-            <h3 className="text-2xl font-bold mb-4 font-sans text-white group-hover:text-[#FF4B2B] transition-colors">Highest Recall Accuracy</h3>
-            <p className="text-gray-400 font-sans leading-relaxed mb-8">
-              The highest accuracy context engine for your team. Never lose a task, a comment, or an attachment again.
-            </p>
-            <div className="h-48 rounded bg-gradient-to-r from-[#FF4B2B] to-orange-500 flex items-center justify-center flex-col">
-              <span className="text-6xl font-bold text-white tracking-tighter">99%</span>
-              <span className="text-white/80 uppercase tracking-widest text-sm mt-2">Uptime</span>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="p-6 rounded-xl border border-hairline bg-surface-1 hover:bg-surface-2 transition-colors">
+            <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center mb-4 border border-accent/20">
+              <Zap className="w-5 h-5 text-accent" />
             </div>
+            <h3 className="text-lg font-semibold text-ink mb-2 tracking-heading">Real-time Sync</h3>
+            <p className="text-[14px] text-ink-subtle leading-relaxed">
+              Experience zero-latency updates across all devices. WebSockets ensure your team always sees the latest changes instantly.
+            </p>
           </div>
 
-          <div className="p-8 rounded-xl border border-white/10 bg-gradient-to-b from-white/[0.03] to-transparent hover:border-[#FF4B2B]/50 transition-colors group">
-            <h3 className="text-2xl font-bold mb-4 font-sans text-white group-hover:text-[#FF4B2B] transition-colors">Scales Like Magic</h3>
-            <p className="text-gray-400 font-sans leading-relaxed mb-8">
-              Designed for high throughput & low latency. Micro-batching Socket.IO events ensures no dropped frames.
-            </p>
-            <div className="h-48 rounded border border-white/10 flex items-center justify-center relative overflow-hidden">
-              <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
-              <div className="relative z-10 flex items-center gap-4 text-sm text-gray-300">
-                <div className="px-4 py-2 border border-white/20 bg-black rounded shadow-[0_0_15px_rgba(255,75,43,0.3)]">Grid</div>
-                <div className="w-8 h-px bg-[#FF4B2B]" />
-                <div className="px-4 py-2 border border-[#FF4B2B] bg-[#FF4B2B]/10 rounded shadow-[0_0_20px_rgba(255,75,43,0.5)]">Memory</div>
-                <div className="w-8 h-px bg-[#FF4B2B]" />
-                <div className="px-4 py-2 border border-white/20 bg-black rounded">Sync</div>
-              </div>
+          <div className="p-6 rounded-xl border border-hairline bg-surface-1 hover:bg-surface-2 transition-colors">
+            <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center mb-4 border border-accent/20">
+              <Layers className="w-5 h-5 text-accent" />
             </div>
+            <h3 className="text-lg font-semibold text-ink mb-2 tracking-heading">Infinite Canvas</h3>
+            <p className="text-[14px] text-ink-subtle leading-relaxed">
+              Organize projects your way with flexible kanban boards, list views, and rich text documents that scale with you.
+            </p>
+          </div>
+
+          <div className="p-6 rounded-xl border border-hairline bg-surface-1 hover:bg-surface-2 transition-colors">
+            <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center mb-4 border border-accent/20">
+              <Shield className="w-5 h-5 text-accent" />
+            </div>
+            <h3 className="text-lg font-semibold text-ink mb-2 tracking-heading">Enterprise Security</h3>
+            <p className="text-[14px] text-ink-subtle leading-relaxed">
+              Bank-grade encryption, secure OAuth, opaque refresh tokens, and strict role-based access control built right in.
+            </p>
           </div>
         </div>
       </section>
       
-      <footer className="border-t border-white/5 py-8 text-center text-gray-600 text-sm">
-        <p>© 2026 StrideWay Inc. All rights reserved.</p>
+      <footer className="border-t border-hairline py-10 px-6 text-center text-ink-subtle text-[13px] bg-surface-1">
+        <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 rounded bg-accent flex items-center justify-center font-bold text-[10px] text-white">S</div>
+            <span className="font-semibold text-ink">Stride</span>
+          </div>
+          <p>© 2026 Stride Inc. All rights reserved.</p>
+        </div>
       </footer>
     </div>
   );
